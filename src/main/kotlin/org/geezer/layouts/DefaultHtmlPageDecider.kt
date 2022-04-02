@@ -1,6 +1,5 @@
 package org.geezer.layouts
 
-import org.geezer.layouts.SharedMethods.isHtmlContent
 import javax.servlet.http.HttpServletRequest
 
 /**

@@ -8,9 +8,9 @@ import javax.servlet.http.HttpServletRequest
  * request will be processed unaltered by Layouts. If a request is a candidate, then the content of this request will
  * be rendered in a layout unless:
  * 1. The content type of the response is set and is something other than HTML.
- * 2. The [Layouts.NO_LAYOUT] `HttpServletRequest` attribute is set to true.
+ * 2. The [NO_LAYOUT] `HttpServletRequest` attribute is set to true.
  * 3. The request returns no content.
- * 4. The layout specified by [Layouts.LAYOUT] is invalid.
+ * 4. The layout specified by [LAYOUT] is invalid.
  */
 interface UseLayoutDecider {
     /**

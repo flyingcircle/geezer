@@ -1,8 +1,5 @@
 package org.geezer.layouts
 
-import org.geezer.layouts.Layouts.NO_LAYOUT
-import org.geezer.layouts.SharedMethods.isHtmlContent
-import org.geezer.layouts.SharedMethods.trueValue
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream

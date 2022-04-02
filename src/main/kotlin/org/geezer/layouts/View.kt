@@ -7,7 +7,7 @@ import javax.servlet.jsp.PageContext
 
 /**
  * The content of the view. This object can be accessed in layouts using the `HttpServletRequest`
- * attribute [Layouts.VIEW]. The Expression Language syntax for this is:
+ * attribute [VIEW]. The Expression Language syntax for this is:
  * ${view.yield(pageContext)}
  */
 class View(private val content: ByteArray, private val response: ServletResponse) {
@@ -74,14 +74,13 @@ class View(private val content: ByteArray, private val response: ServletResponse
      * or closing tags are different. Not sure how to grab the encoding from the JSP that created the current content automatically.
      * Maybe add a filter parameter to specify the encoding if it's different then default.
      */
-        val tagNameBytes = tagName.toByteArray()
-        val openTagBytes = makeOpenTag(tagNameBytes)
-        val openTagIndex = indexOf(content, openTagBytes)
+        val openTag = makeOpenTag(tagName)
+        val openTagIndex = indexOf(content, openTag)
         if (openTagIndex >= 0) {
-            val closedTagBytes = makeCloseTag(tagNameBytes)
-            val closeTagIndex = lastIndexOf(content, closedTagBytes)
+            val closedTag = makeCloseTag(tagName)
+            val closeTagIndex = lastIndexOf(content, closedTag)
             if (closeTagIndex > openTagIndex) {
-                val startIndex = openTagIndex + openTagBytes.size
+                val startIndex = openTagIndex + openTag.length
                 val length = closeTagIndex - startIndex
                 /*
                  * We're mixing the JSPWriter and the ServletOutStream here because we don't want to take the hit to turn
@@ -96,26 +95,9 @@ class View(private val content: ByteArray, private val response: ServletResponse
         }
     }
 
-    private fun makeCloseTag(tagNameBytes: ByteArray): ByteArray {
-        val closedTagBytes = ByteArray(tagNameBytes.size + 3)
-        closedTagBytes[0] = LESS_THAN
-        closedTagBytes[1] = SOLIDUS
-        for (i in tagNameBytes.indices) {
-            closedTagBytes[i + 2] = tagNameBytes[i]
-        }
-        closedTagBytes[closedTagBytes.size - 1] = GREATER_THAN
-        return closedTagBytes
-    }
+    private fun makeCloseTag(tagName: String): String = "</$tagName>"
 
-    private fun makeOpenTag(tagNameBytes: ByteArray): ByteArray {
-        val openTagBytes = ByteArray(tagNameBytes.size + 2)
-        openTagBytes[0] = LESS_THAN
-        for (i in tagNameBytes.indices) {
-            openTagBytes[i + 1] = tagNameBytes[i]
-        }
-        openTagBytes[openTagBytes.size - 1] = GREATER_THAN
-        return openTagBytes
-    }
+    private fun makeOpenTag(tagName: String): String = "<$tagName>"
 
     /**
      * Is the tag name defined in the current content?.
@@ -130,12 +112,11 @@ class View(private val content: ByteArray, private val response: ServletResponse
      * or closing tags are different. Not sure how to grab the encoding from the JSP that created the current content automatically.
      * Maybe add a filter parameter to specify the encoding if it's different then default.
      */
-        val tagNameBytes = tagName.toByteArray()
-        val openTagBytes = makeOpenTag(tagNameBytes)
-        val openTagIndex = indexOf(content, openTagBytes)
+        val openTag = makeOpenTag(tagName)
+        val openTagIndex = indexOf(content, openTag)
         return if (openTagIndex >= 0) {
-            val closedTagBytes = makeCloseTag(tagNameBytes)
-            val closeTagIndex = lastIndexOf(content, closedTagBytes)
+            val closedTag = makeCloseTag(tagName)
+            val closeTagIndex = lastIndexOf(content, closedTag)
             closeTagIndex > openTagIndex
         } else {
             false
@@ -143,11 +124,11 @@ class View(private val content: ByteArray, private val response: ServletResponse
     }
 }
 
-fun indexOf(data: ByteArray, pattern: ByteArray): Int {
+fun indexOf(data: ByteArray, pattern: String): Int {
     var matchIndex = 0
-    val finalIndex = pattern.size - 1
+    val finalIndex = pattern.length - 1
     for (i in data.indices) {
-        if (data[i] == pattern[matchIndex]) {
+        if (data[i].toInt().toChar() == pattern[matchIndex]) {
             if (matchIndex == finalIndex) {
                 return i - finalIndex
             } else {
@@ -160,11 +141,11 @@ fun indexOf(data: ByteArray, pattern: ByteArray): Int {
     return -1
 }
 
-fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int {
-    val startMatchIndex = pattern.size - 1
+fun lastIndexOf(data: ByteArray, pattern: String): Int {
+    val startMatchIndex = pattern.length - 1
     var matchIndex = startMatchIndex
     for (i in data.indices.reversed()) {
-        if (data[i] == pattern[matchIndex]) {
+        if (data[i].toInt().toChar() == pattern[matchIndex]) {
             if (matchIndex == 0) {
                 return i
             } else {
@@ -176,7 +157,3 @@ fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int {
     }
     return -1
 }
-
-const val LESS_THAN = '<'.code.toByte()
-const val SOLIDUS = '/'.code.toByte()
-const val GREATER_THAN = '>'.code.toByte()

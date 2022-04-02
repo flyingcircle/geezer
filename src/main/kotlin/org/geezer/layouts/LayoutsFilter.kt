@@ -1,6 +1,5 @@
 package org.geezer.layouts
 
-import org.geezer.layouts.SharedMethods.trueValue
 import java.io.File
 import java.io.IOException
 import java.lang.Exception
@@ -155,12 +154,12 @@ class LayoutsFilter : Filter {
         if (!requestExcludedFromPatterns(httpRequest) && layoutDecider!!.isCandidateForLayout(httpRequest)) {
             val httpResponseBuffer = HttpBufferedResponse(httpRequest, httpResponse)
             chain.doFilter(httpRequest, httpResponseBuffer)
-            if (httpResponseBuffer.hasBufferedContent() && httpResponseBuffer.isHtmlContent && !trueValue(httpRequest.getAttribute(Layouts.NO_LAYOUT))) {
-                val layoutName = httpRequest.getAttribute(Layouts.LAYOUT) as String?
+            if (httpResponseBuffer.hasBufferedContent() && httpResponseBuffer.isHtmlContent && !trueValue(httpRequest.getAttribute(NO_LAYOUT))) {
+                val layoutName = httpRequest.getAttribute(LAYOUT) as String?
                 val layout = layouts.getOrDefault(layoutName, defaultLayout)
                 if (layout != null) {
                     httpResponse = HttpMixedOutputResponse(httpResponse)
-                    httpRequest.setAttribute(Layouts.VIEW, View(httpResponseBuffer.content!!, httpResponse))
+                    httpRequest.setAttribute(VIEW, View(httpResponseBuffer.content!!, httpResponse))
                     httpRequest.getRequestDispatcher(layout.jspPath).forward(httpRequest, httpResponse)
                 } else {
                     httpResponse.status = 500
