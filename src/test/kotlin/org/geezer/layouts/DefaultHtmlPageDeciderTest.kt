@@ -1,6 +1,5 @@
 package org.geezer.layouts
 
-import org.geezer.layouts.DefaultHtmlPageDecider.Companion.knownNonHtmlFile
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.test.Test

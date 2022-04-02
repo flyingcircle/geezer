@@ -15,8 +15,8 @@ import javax.servlet.http.HttpServletRequest
 interface UseLayoutDecider {
     /**
      *
-     * @param httpRequest The HTTP request.
+     * @param request The HTTP request.
      * @return `true` if this HTTP request is a candidate for a layout.
      */
-    fun isCandidateForLayout(httpRequest: HttpServletRequest?): Boolean
+    fun isCandidateForLayout(request: HttpServletRequest?): Boolean
 }

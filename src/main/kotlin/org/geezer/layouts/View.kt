@@ -141,46 +141,42 @@ class View(private val content: ByteArray, private val response: ServletResponse
             false
         }
     }
-
-    companion object {
-        @JvmStatic
-        fun indexOf(data: ByteArray, pattern: ByteArray): Int {
-            var matchIndex = 0
-            val finalIndex = pattern.size - 1
-            for (i in data.indices) {
-                if (data[i] == pattern[matchIndex]) {
-                    if (matchIndex == finalIndex) {
-                        return i - finalIndex
-                    } else {
-                        ++matchIndex
-                    }
-                } else {
-                    matchIndex = 0
-                }
-            }
-            return -1
-        }
-
-        @JvmStatic
-        fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int {
-            val startMatchIndex = pattern.size - 1
-            var matchIndex = startMatchIndex
-            for (i in data.indices.reversed()) {
-                if (data[i] == pattern[matchIndex]) {
-                    if (matchIndex == 0) {
-                        return i
-                    } else {
-                        --matchIndex
-                    }
-                } else {
-                    matchIndex = startMatchIndex
-                }
-            }
-            return -1
-        }
-
-        const val LESS_THAN = '<'.code.toByte()
-        const val SOLIDUS = '/'.code.toByte()
-        const val GREATER_THAN = '>'.code.toByte()
-    }
 }
+
+fun indexOf(data: ByteArray, pattern: ByteArray): Int {
+    var matchIndex = 0
+    val finalIndex = pattern.size - 1
+    for (i in data.indices) {
+        if (data[i] == pattern[matchIndex]) {
+            if (matchIndex == finalIndex) {
+                return i - finalIndex
+            } else {
+                ++matchIndex
+            }
+        } else {
+            matchIndex = 0
+        }
+    }
+    return -1
+}
+
+fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int {
+    val startMatchIndex = pattern.size - 1
+    var matchIndex = startMatchIndex
+    for (i in data.indices.reversed()) {
+        if (data[i] == pattern[matchIndex]) {
+            if (matchIndex == 0) {
+                return i
+            } else {
+                --matchIndex
+            }
+        } else {
+            matchIndex = startMatchIndex
+        }
+    }
+    return -1
+}
+
+const val LESS_THAN = '<'.code.toByte()
+const val SOLIDUS = '/'.code.toByte()
+const val GREATER_THAN = '>'.code.toByte()

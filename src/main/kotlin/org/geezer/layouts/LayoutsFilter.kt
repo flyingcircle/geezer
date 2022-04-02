@@ -175,7 +175,7 @@ class LayoutsFilter : Filter {
     }
 
     override fun destroy() {}
-    fun requestExcludedFromPatterns(httpRequest: HttpServletRequest): Boolean {
+    private fun requestExcludedFromPatterns(httpRequest: HttpServletRequest): Boolean {
         val requestPath = httpRequest.requestURI.substring(httpRequest.contextPath.length)
         return (onlyPatterns.isNotEmpty() && !onlyPatterns.any { it.matcher(requestPath).matches() }) ||
             (exceptPatterns.isNotEmpty() && exceptPatterns.any { it.matcher(requestPath).matches() })
