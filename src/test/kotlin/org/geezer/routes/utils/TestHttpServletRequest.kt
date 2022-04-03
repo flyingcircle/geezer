@@ -6,8 +6,8 @@ import java.io.InputStreamReader
 import java.io.UnsupportedEncodingException
 import java.security.Principal
 import java.util.*
-import javax.servlet.*
-import javax.servlet.http.*
+import jakarta.servlet.*
+import jakarta.servlet.http.*
 
 class TestHttpServletRequest : HttpServletRequest {
     var attributes: MutableMap<String, Any> = HashMap()

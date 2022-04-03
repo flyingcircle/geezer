@@ -1,7 +1,7 @@
 package org.geezer.routes
 
 import java.net.URLDecoder
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class RequestPath {
     val segments: List<String>

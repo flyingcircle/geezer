@@ -8,24 +8,24 @@ class SharedMethodsTest {
 
     @Test
     fun `boolean value`() {
-        assertTrue { SharedMethods.trueValue(true) }
-        assertFalse { SharedMethods.trueValue(false) }
+        assertTrue { trueValue(true) }
+        assertFalse { trueValue(false) }
     }
     @Test
     fun `string value`() {
-        assertTrue { SharedMethods.trueValue("true") }
-        assertTrue { SharedMethods.trueValue("True") }
-        assertTrue { SharedMethods.trueValue("TRUE") }
-        assertFalse { SharedMethods.trueValue("") }
-        assertFalse { SharedMethods.trueValue("false") }
-        assertFalse { SharedMethods.trueValue("goobildy") }
+        assertTrue { trueValue("true") }
+        assertTrue { trueValue("True") }
+        assertTrue { trueValue("TRUE") }
+        assertFalse { trueValue("") }
+        assertFalse { trueValue("false") }
+        assertFalse { trueValue("goobildy") }
     }
     @Test
     fun `null value`() {
-        assertFalse { SharedMethods.trueValue(null) }
+        assertFalse { trueValue(null) }
     }
     @Test
     fun `other value`() {
-        assertFalse { SharedMethods.trueValue(40) }
+        assertFalse { trueValue(40) }
     }
 }

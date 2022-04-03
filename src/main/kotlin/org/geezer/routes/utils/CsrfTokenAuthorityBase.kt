@@ -5,7 +5,7 @@ import org.geezer.routes.ReturnStatus
 import org.geezer.routes.RoutesConfiguration
 import org.geezer.routes.RoutesLogger
 import java.nio.ByteBuffer
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /**
  * Manages the generation and confirmation of CSRF Tokens used for administrative forms.

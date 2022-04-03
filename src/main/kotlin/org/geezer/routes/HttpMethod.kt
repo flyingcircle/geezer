@@ -7,7 +7,7 @@ enum class HttpMethod {
     companion object {
         /**
          * @return The matched HTTP method or `null` if no match is found.
-         * @see javax.servlet.http.HttpServletRequest.getMethod
+         * @see jakarta.servlet.http.HttpServletRequest.getMethod
          */
         fun fromServletMethod(servletMethod: String): HttpMethod = values().firstOrNull { it.toString().equals(servletMethod, true) } ?: GET
 

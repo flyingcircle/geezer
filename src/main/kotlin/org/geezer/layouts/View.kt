@@ -2,8 +2,8 @@ package org.geezer.layouts
 
 import java.io.IOException
 import java.io.OutputStream
-import javax.servlet.ServletResponse
-import javax.servlet.jsp.PageContext
+import jakarta.servlet.ServletResponse
+import jakarta.servlet.jsp.PageContext
 
 /**
  * The content of the view. This object can be accessed in layouts using the `HttpServletRequest`

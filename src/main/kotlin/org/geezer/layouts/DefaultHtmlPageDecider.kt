@@ -1,6 +1,6 @@
 package org.geezer.layouts
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /**
  * By default, a request will be a candidate for a layout unless one the following conditions is met:

@@ -22,8 +22,8 @@ dependencies {
     implementation("commons-codec:commons-codec:1.15")
     implementation("commons-io:commons-io:2.11.0")
     compileOnly("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-    compileOnly("javax.servlet:javax.servlet-api:4.0.1")
-    compileOnly("javax.servlet.jsp:javax.servlet.jsp-api:2.3.3")
+    compileOnly("jakarta.servlet:jakarta.servlet-api:5.0.0")
+    compileOnly("jakarta.servlet.jsp:jakarta.servlet.jsp-api:3.0.0")
     testImplementation(kotlin("test"))
     testImplementation("com.h2database:h2:2.1.210")
 }

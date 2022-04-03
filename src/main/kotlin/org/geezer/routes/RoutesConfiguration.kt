@@ -22,7 +22,7 @@ class RoutesConfiguration {
 
     /**
      * Default content type returned by all routes if not overridden. This can be overridden in [Routes.defaultContentType],
-     * [RouteNode.contentType], or by explicitly calling [javax.servlet.http.HttpServletResponse.setContentType] in the
+     * [RouteNode.contentType], or by explicitly calling [jakarta.servlet.http.HttpServletResponse.setContentType] in the
      * route method.
      */
     var defaultContentType: String? = null

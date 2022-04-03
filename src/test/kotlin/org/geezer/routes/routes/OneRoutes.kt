@@ -1,8 +1,8 @@
 package org.geezer.routes.routes
 
 import org.geezer.routes.RequestContext
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 open class BaseOneRoutes {
 

@@ -8,7 +8,7 @@ import java.nio.file.Files
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Collections
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 import kotlin.reflect.KFunction
 
 /**
