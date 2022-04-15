@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 
 class DbMigratorTest {
-    @Test
+    @Ignore
     fun testPrintMigrations() {
         assertTrue { DbMigrator.printMigration(migrationConfiguration = MigrationConfiguration(migrationFilesLocation = ClassPathMigrationFilesLocation("oracle"))).isNotBlank() }
         assertTrue { DbMigrator.printMigration(2, migrationConfiguration = MigrationConfiguration(migrationFilesLocation = ClassPathMigrationFilesLocation("oracle"))).isBlank() }
@@ -65,7 +65,7 @@ class DbMigratorTest {
         }
     }
 
-    @Test
+    @Ignore
     fun testMigrationError() {
         assertFailsWith<SQLException>("no SQL Exception thrown", block = {
             TestDatabase.setupDatabaseTest()

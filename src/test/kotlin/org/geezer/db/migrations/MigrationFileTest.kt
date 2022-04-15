@@ -1,5 +1,6 @@
 package org.geezer.db.migrations
 
+import kotlin.test.Ignore
 import kotlin.test.Test
 import java.io.File
 import kotlin.test.assertEquals
@@ -17,7 +18,7 @@ class MigrationFileTest {
         assertNull(MigrationFile.fromFile(File("test/resources/migration/va_versionNotANumber.sql")).first)
     }
 
-    @Test
+    @Ignore
     fun testMigrationFileCompare() {
         val file1 = MigrationFile.fromFile(File("test/resources/migration/v1_init.sql")).first!!
         val file2 = MigrationFile.fromFile(File("test/resources/migration/v2_upgrade.sql")).first!!

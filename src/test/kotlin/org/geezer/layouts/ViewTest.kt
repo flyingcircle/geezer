@@ -16,14 +16,14 @@ class ViewTest {
 
     @Test
     fun testIndexOf() {
-        val pattern = "122345"
+        val pattern = "122345".toByteArray()
         assertEquals(-1, indexOf("ABC123456789DEF".toByteArray(), pattern))
         assertEquals(3, indexOf("ABC1223456789DEF".toByteArray(), pattern))
     }
 
     @Test
     fun testLastIndexOf() {
-        val pattern = "122345"
+        val pattern = "122345".toByteArray()
         assertEquals(3, lastIndexOf("ABC1223456789DEF".toByteArray(), pattern))
         assertEquals(-1, lastIndexOf("ABC123456789DEF".toByteArray(), pattern))
         assertEquals(16, lastIndexOf("ABC1223456789DEF122345".toByteArray(), pattern))
