@@ -96,26 +96,9 @@ class View(private val content: ByteArray, private val response: ServletResponse
         }
     }
 
-    private fun makeCloseTag(tagNameBytes: ByteArray): ByteArray {
-        val closedTagBytes = ByteArray(tagNameBytes.size + 3)
-        closedTagBytes[0] = LESS_THAN
-        closedTagBytes[1] = SOLIDUS
-        for (i in tagNameBytes.indices) {
-            closedTagBytes[i + 2] = tagNameBytes[i]
-        }
-        closedTagBytes[closedTagBytes.size - 1] = GREATER_THAN
-        return closedTagBytes
-    }
+    private fun makeCloseTag(tagNameBytes: ByteArray) = byteArrayOf(LESS_THAN, SOLIDUS, *tagNameBytes, GREATER_THAN)
 
-    private fun makeOpenTag(tagNameBytes: ByteArray): ByteArray {
-        val openTagBytes = ByteArray(tagNameBytes.size + 2)
-        openTagBytes[0] = LESS_THAN
-        for (i in tagNameBytes.indices) {
-            openTagBytes[i + 1] = tagNameBytes[i]
-        }
-        openTagBytes[openTagBytes.size - 1] = GREATER_THAN
-        return openTagBytes
-    }
+    private fun makeOpenTag(tagNameBytes: ByteArray) = byteArrayOf(LESS_THAN, *tagNameBytes, GREATER_THAN)
 
     /**
      * Is the tag name defined in the current content?.
@@ -147,36 +130,40 @@ const val LESS_THAN = '<'.code.toByte()
 const val SOLIDUS = '/'.code.toByte()
 const val GREATER_THAN = '>'.code.toByte()
 
-fun indexOf(data: ByteArray, pattern: ByteArray): Int {
-    var matchIndex = 0
-    val finalIndex = pattern.size - 1
-    for (i in data.indices) {
-        if (data[i] == pattern[matchIndex]) {
-            if (matchIndex == finalIndex) {
-                return i - finalIndex
-            } else {
-                ++matchIndex
-            }
+fun indexOf(data: ByteArray, pattern: ByteArray): Int  = indexOf(data, pattern, 0, 0)
+
+tailrec fun indexOf(data: ByteArray, pattern: ByteArray, currentIndex: Int, matchIndex: Int): Int {
+    return if (currentIndex >= data.size) {
+        -1
+    } else if (data[currentIndex] == pattern[matchIndex]) {
+        if (matchIndex == pattern.size - 1) {
+            currentIndex - matchIndex
         } else {
-            matchIndex = 0
+            indexOf(data, pattern, currentIndex + 1, matchIndex + 1)
         }
+    } else if (matchIndex > 0) {
+        indexOf(data, pattern, currentIndex - matchIndex + 1, 0)
+    } else {
+        indexOf(data, pattern, currentIndex + 1, 0)
     }
-    return -1
 }
 
-fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int {
-    val startMatchIndex = pattern.size - 1
-    var matchIndex = startMatchIndex
-    for (i in data.indices.reversed()) {
-        if (data[i] == pattern[matchIndex]) {
-            if (matchIndex == 0) {
-                return i
-            } else {
-                --matchIndex
-            }
+fun lastIndexOf(data: ByteArray, pattern: ByteArray): Int = lastIndexOf(data, pattern, data.size - 1, pattern.size - 1)
+
+tailrec fun lastIndexOf(data: ByteArray, pattern: ByteArray, currentIndex: Int, matchIndex: Int): Int {
+    return if (currentIndex < 0) {
+        -1
+    } else if (data[currentIndex] == pattern[matchIndex]) {
+        if (matchIndex == 0) {
+            currentIndex
         } else {
-            matchIndex = startMatchIndex
+            lastIndexOf(data, pattern, currentIndex - 1, matchIndex - 1)
         }
+    } else if (matchIndex < pattern.size - 1) {
+        lastIndexOf(data, pattern, currentIndex + pattern.size - matchIndex - 2, pattern.size - 1)
+    } else {
+        lastIndexOf(data, pattern, currentIndex - 1 , matchIndex)
     }
-    return -1
 }
+
+

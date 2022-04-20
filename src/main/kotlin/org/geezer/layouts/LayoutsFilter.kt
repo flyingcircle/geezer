@@ -87,7 +87,9 @@ class LayoutsFilter: Filter {
     }
 }
 
-data class LayoutPatterns(
+private data class Layout(val name: String, val jspPath: String)
+
+private data class LayoutPatterns(
     val onlyPatterns: List<Pattern>,
     val exceptPatterns: List<Pattern>,
     val layoutDecider: UseLayoutDecider,
@@ -95,7 +97,7 @@ data class LayoutPatterns(
     val layouts: Map<String, Layout>
 )
 
-fun layoutPatternFromConfig(filterConfig: FilterConfig): Either<String, LayoutPatterns> {
+private fun layoutPatternFromConfig(filterConfig: FilterConfig): Either<String, LayoutPatterns> {
     val onlyPatterns = getPatterns(filterConfig.getInitParameter("ONLY"))
     val exceptPatterns = getPatterns(filterConfig.getInitParameter("EXCEPT"))
     val layoutDecider = filterConfig.getInitParameter("USE_LAYOUT_DECIDER")?.let {
@@ -125,13 +127,13 @@ fun layoutPatternFromConfig(filterConfig: FilterConfig): Either<String, LayoutPa
     return Either.Right(LayoutPatterns(onlyPatterns, exceptPatterns, layoutDecider, defaultLayout!!, layouts))
 }
 
-fun getPatterns(param: String?): List<Pattern> {
+private fun getPatterns(param: String?): List<Pattern> {
     return (param ?: "").split(",")
         .filter { it.isNotBlank() }
         .map { Pattern.compile(it) }
 }
 
-fun createLayoutsFromFile(filterConfig: FilterConfig, layoutsDirPath: String): Either<String, Map<String, Layout>> {
+private fun createLayoutsFromFile(filterConfig: FilterConfig, layoutsDirPath: String): Either<String, Map<String, Layout>> {
     val layoutsDir = File(filterConfig.servletContext.getRealPath(layoutsDirPath))
     if (!layoutsDir.isDirectory) {
         return Either.Left("Layouts directory: $layoutsDirPath does not exists")
@@ -144,7 +146,7 @@ fun createLayoutsFromFile(filterConfig: FilterConfig, layoutsDirPath: String): E
     return Either.Right(layoutMap)
 }
 
-fun createLayoutsFromParams(layoutsParameter: String, layoutsDirPath: String): Either<String, Map<String, Layout>> {
+private fun createLayoutsFromParams(layoutsParameter: String, layoutsDirPath: String): Either<String, Map<String, Layout>> {
     val layoutMap = layoutsParameter.split(",")
         .filter { it.isNotBlank() }
         .map { it.trim() }

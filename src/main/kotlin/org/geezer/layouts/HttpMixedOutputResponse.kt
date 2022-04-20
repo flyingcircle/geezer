@@ -13,15 +13,12 @@ import jakarta.servlet.http.HttpServletResponseWrapper
  */
 internal class HttpMixedOutputResponse(response: HttpServletResponse) : HttpServletResponseWrapper(response) {
     private val outputStream: OutputStream
-    private var printWriter: PrintWriter? = null
-    override fun getWriter(): PrintWriter? {
-        if (printWriter == null) {
-            printWriter = PrintWriter(OutputStreamWriter(outputStream))
-        }
-        return printWriter
-    }
+    private val printWriter: PrintWriter
+
+    override fun getWriter(): PrintWriter = printWriter
 
     init {
         outputStream = response.outputStream
+        printWriter = PrintWriter(OutputStreamWriter(outputStream))
     }
 }
