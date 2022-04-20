@@ -1,6 +1,6 @@
 
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.20"
 }
 
 group = "org.geezer"
@@ -25,11 +25,7 @@ dependencies {
     compileOnly("jakarta.servlet:jakarta.servlet-api:5.0.0")
     compileOnly("jakarta.servlet.jsp:jakarta.servlet.jsp-api:3.0.0")
     testImplementation(kotlin("test"))
-    testImplementation("com.h2database:h2:2.1.210")
 }
 
-tasks {
-    test {
-        useJUnitPlatform()
-    }
-}
+tasks.test { useJUnitPlatform() }
+

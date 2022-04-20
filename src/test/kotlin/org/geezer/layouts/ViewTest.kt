@@ -3,7 +3,8 @@ package org.geezer.layouts
 import kotlin.test.assertEquals
 import kotlin.test.Test
 
-class ViewTest {
+internal class ViewTest {
+
     @Test
     fun testContent() {
         /*
