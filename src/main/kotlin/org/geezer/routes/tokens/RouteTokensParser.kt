@@ -1,71 +1,52 @@
 package org.geezer.routes.tokens
 
 internal object RouteTokensParser {
-    fun parse(route: String): RouteTokens {
-        val pathTokens = mutableListOf<PathToken>()
-        val parameterTokens = mutableListOf<ParameterToken>()
+    fun parse(route: String): RouteTokens = RouteTokens(getPathTokens(route), getParameterTokens(route))
 
+    private fun getPathTokens(route: String): List<PathToken> {
         val parameterIndex: Int = findParameterIndex(route)
+        val pathPart = (if (parameterIndex == -1) route else route.substring(0, parameterIndex))
+            .removePrefix("/")
+            .removeSuffix("/")
 
-        var pathPart = if (parameterIndex == -1) route else route.substring(0, parameterIndex)
-        val parameterPart = if (parameterIndex == -1 || parameterIndex == route.length - 1) null else route.substring(parameterIndex + 1, route.length)
-
-        if (pathPart.startsWith("/")) pathPart = route.substring(1, pathPart.length)
-        if (pathPart.endsWith("/")) pathPart = route.substring(0, pathPart.length - 1)
-
-        val pathSegments = pathPart.split("/").toTypedArray()
-        for (i in pathSegments.indices) {
-            val pathSegment = pathSegments[i]
-            if (pathSegment == "{}") {
-                pathTokens.add(FunctionParameterPathToken(i))
-            } else if (pathSegment.startsWith("{") && pathSegment.endsWith("}")) {
-                pathTokens.add(PatternPathToken(i, pathSegment.substring(1, pathSegment.length - 1)))
-            } else if (pathSegment == "*") {
-                pathTokens.add(WildcardPathToken(i))
-            } else if (pathSegment == "**") {
-                pathTokens.add(GobblePathToken(i))
-            } else if (isSymbol(pathSegment)) {
-                pathTokens.add(SymbolPathToken(i, pathSegment.substring(1, pathSegment.length)))
-            } else if (pathSegment.isNotEmpty()) {
-                pathTokens.add(ExactValuePathToken(i, pathSegment))
+        return pathPart.split("/").mapIndexedNotNull { i, s ->
+            when {
+                s == "{}" -> FunctionParameterPathToken(i)
+                s.startsWith("{") && s.endsWith("}") -> PatternPathToken(i, s.substring(1, s.length - 1))
+                s == "*" -> WildcardPathToken(i)
+                s == "**" -> GobblePathToken(i)
+                isSymbol(s) -> SymbolPathToken(i, s.substring(1, s.length))
+                s.isNotEmpty() -> ExactValuePathToken(i, s)
+                else -> null
             }
         }
-
-        if (parameterPart != null) {
-            val pairs = parameterPart.split("&").toTypedArray()
-            for (pair in pairs) {
-                var pair = pair
-                var optional: Boolean
-
-                if (pair.startsWith("(") && pair.endsWith(")?")) {
-                    optional = true
-                    pair = pair.substring(1, pair.length - 2)
-                } else {
-                    optional = false
-                }
-                val index = pair.indexOf('=')
-                if (index != -1) {
-                    val name = pair.substring(0, index)
-                    val value = pair.substring(index + 1, pair.length)
-                    if (value == "{}") {
-                        parameterTokens.add(FunctionParameterParameterToken(name, optional))
-                    } else if (value.startsWith("{") && value.endsWith("}")) {
-                        parameterTokens.add(PatternParameterToken(name, optional, value.substring(1, value.length - 1)))
-                    } else if (value == "*") {
-                        parameterTokens.add(WildcardParameterToken(name, optional))
-                    } else if (isSymbol(value)) {
-                        parameterTokens.add(SymbolParameterToken(name, optional, value.substring(1, value.length)))
-                    } else {
-                        parameterTokens.add(ExactValueParameterToken(name, optional, value))
-                    }
-                }
-            }
-        }
-
-        return RouteTokens(pathTokens, parameterTokens)
     }
 
-    fun findParameterIndex(route: String): Int {
+    private fun getParameterTokens(route: String): List<ParameterToken> {
+        val parameterIndex: Int = findParameterIndex(route)
+        if (parameterIndex == -1 || parameterIndex == route.length - 1) return listOf()
+        val parameterPart = route.substring(parameterIndex + 1, route.length)
+
+        return parameterPart.split("&")
+            .map { if(it.startsWith("(") && it.endsWith(")?"))
+                it.substring(1, it.length - 2) to true
+                else it to false}
+            .filter { it.first.contains('=') }
+            .map { it.first.split('=', limit=2) to it.second }
+            .map {
+                val (name, value) = it.first[0] to it.first[1]
+                when {
+                    value == "{}" -> FunctionParameterParameterToken(name, it.second)
+                    value.startsWith("{") && value.endsWith("}") ->
+                        PatternParameterToken(name, it.second, value.substring(1, value.length - 1))
+                    value == "*" -> WildcardParameterToken(name, it.second)
+                    isSymbol(value) -> SymbolParameterToken(name, it.second, value.substring(1, value.length))
+                    else -> ExactValueParameterToken(name, it.second, value)
+                }
+            }
+    }
+
+    private fun findParameterIndex(route: String): Int {
         var openPatternBrackets = 0
         val chars = route.toCharArray()
         for (i in chars.indices) {
@@ -81,7 +62,10 @@ internal object RouteTokensParser {
         return -1
     }
 
-    fun isSymbol(string: String?): Boolean {
-        return string != null && string.startsWith(":") && string.length > 1 && string.indexOf(' ') == -1
+    private fun isSymbol(string: String?): Boolean {
+        return string != null &&
+                string.startsWith(":") &&
+                string.length > 1 &&
+                !string.contains(' ')
     }
 }

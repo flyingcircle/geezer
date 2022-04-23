@@ -3,24 +3,24 @@ package org.geezer.routes.criteria
 import org.geezer.routes.HttpMethod
 import org.geezer.routes.RequestContext
 
-internal class RouteCriteria(val methods: List<HttpMethod>, val pathCriteria: List<PathCriterion>, val parameterCriteria: List<ParameterCriterion>, val acceptTypePatterns: List<Regex>, val ignoreCase: Boolean) {
+internal data class RouteCriteria(
+    val methods: List<HttpMethod>,
+    val pathCriteria: List<PathCriterion>,
+    val parameterCriteria: List<ParameterCriterion>,
+    val acceptTypePatterns: List<Regex>,
+    val ignoreCase: Boolean) {
 
-    val hasPattern: Boolean = pathCriteria.any { it.type == PathCriterionType.Regex } || parameterCriteria.any { it.type == ParameterCriterionType.Regex }
+    private val hasPattern: Boolean = pathCriteria.any { it.type == PathCriterionType.Regex } || parameterCriteria.any { it.type == ParameterCriterionType.Regex }
 
-    val hasGobblePathCriterion: Boolean = pathCriteria.any { it.type == PathCriterionType.Gobble }
+    private val hasGobblePathCriterion: Boolean = pathCriteria.any { it.type == PathCriterionType.Gobble }
 
     val allPathCriteriaFixed = pathCriteria.all { it.type == PathCriterionType.Exact }
 
     val allCriteriaFixed: Boolean = !hasPattern && !hasGobblePathCriterion
 
     fun matches(context: RequestContext): Boolean {
-        if (!methods.contains(context.method)) {
-            return false
-        }
-
-        if (!hasGobblePathCriterion && context.path.size != pathCriteria.size) {
-            return false
-        }
+        if (!methods.contains(context.method) ||
+            !hasGobblePathCriterion && context.path.size != pathCriteria.size) return false
 
         PathCheck@
         for ((index, segment) in context.path.segments.withIndex()) {
@@ -44,7 +44,8 @@ internal class RouteCriteria(val methods: List<HttpMethod>, val pathCriteria: Li
             }
         }
 
-        if (acceptTypePatterns.isNotEmpty() && acceptTypePatterns.none { it.containsMatchIn(context.requestedContentType.type) }) {
+        if (acceptTypePatterns.isNotEmpty() &&
+            acceptTypePatterns.none { it.containsMatchIn(context.requestedContentType.type) }) {
             return false
         }
 
