@@ -46,20 +46,18 @@ internal object RouteTokensParser {
             }
     }
 
-    private fun findParameterIndex(route: String): Int {
-        var openPatternBrackets = 0
-        val chars = route.toCharArray()
-        for (i in chars.indices) {
-            val c = chars[i]
-            if (c == '?' && openPatternBrackets == 0) {
-                return i
-            } else if (c == '{') {
-                ++openPatternBrackets
-            } else if (c == '}') {
-                openPatternBrackets = 0.coerceAtLeast(openPatternBrackets - 1)
-            }
+    private tailrec fun findParameterIndex(route: String, i: Int = 0, openBracketCount: Int = 0): Int {
+        return if (i >= route.length) {
+            -1
+        } else if(route[i] == '?' && openBracketCount == 0) {
+            i
+        } else if(route[i] == '{') {
+            findParameterIndex(route, i+1, openBracketCount+1)
+        } else if(route[i] == '}') {
+            findParameterIndex(route, i+1, (openBracketCount - 1).coerceAtLeast(0))
+        } else {
+            findParameterIndex(route, i+1, openBracketCount)
         }
-        return -1
     }
 
     private fun isSymbol(string: String?): Boolean {
