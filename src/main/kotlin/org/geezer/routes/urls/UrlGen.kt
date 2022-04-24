@@ -27,7 +27,7 @@ object UrlGen {
 
     private lateinit var rootUrlOrPath: String
 
-    private var routingTables = mutableListOf<RoutingTable>()
+    private lateinit var routingTables: List<RoutingTable>
 
     private val assetHashPath = Collections.synchronizedMap(mutableMapOf<String, String>())
 
@@ -42,13 +42,8 @@ object UrlGen {
     var imagePath = "/assets/img"
 
     fun initialize(rootUrlOrPath: String, routingTable: RoutingTable, vararg routingTables: RoutingTable) {
-        if (rootUrlOrPath.endsWith("/")) {
-            this.rootUrlOrPath = rootUrlOrPath.substring(0, rootUrlOrPath.length - 1)
-        } else {
-            this.rootUrlOrPath = rootUrlOrPath
-        }
-        this.routingTables.add(routingTable)
-        this.routingTables.addAll(routingTables)
+        this.rootUrlOrPath = rootUrlOrPath.removeSuffix("/")
+        this.routingTables = listOf(routingTable, *routingTables)
     }
 
     @JvmStatic
@@ -63,30 +58,32 @@ object UrlGen {
 
     @JvmStatic
     fun url(routeFunction: KFunction<*>): String {
-        val urlPath: String = routingTables.firstOrNull { it[routeFunction] != null }?.get(routeFunction) ?: throw IllegalArgumentException("Route function $routeFunction has not been added.")
+        val urlPath: String = routingTables.firstOrNull {
+            it[routeFunction] != null }?.get(routeFunction) ?:
+            throw IllegalArgumentException("Route function $routeFunction has not been added.")
         return url(urlPath)
     }
 
     @JvmStatic
     fun url(routeFunction: KFunction<*>, parameters: List<Any>): String {
-        val routeSegments: List<String> = routingTables.firstOrNull { it[routeFunction] != null }?.get(routeFunction)?.split("/")?.filter { it.isNotBlank() } ?: throw IllegalArgumentException("Route function $routeFunction has not been added.")
+        val routeSegments: List<String> = routingTables.firstOrNull {
+            it[routeFunction] != null }?.get(routeFunction)
+                ?.split("/")
+                ?.filter { it.isNotBlank() } ?:
+                throw IllegalArgumentException("Route function $routeFunction has not been added.")
 
-        val urlSegments = mutableListOf<String>()
         var parameterIndex = 0
 
-        for (routeSegment in routeSegments) {
-            when (routeSegment) {
-                "{}",
-                "*",
-                "**" -> {
+        val urlSegments = routeSegments.map {
+            when (it) {
+                "{}", "*", "**" -> {
                     if (parameterIndex < parameters.size) {
-                        urlSegments.add(parameters[parameterIndex++].toString())
+                        parameters[parameterIndex++].toString()
                     } else {
-                        urlSegments.add(routeSegment)
+                        it
                     }
                 }
-
-                else -> urlSegments.add(routeSegment)
+                else -> it
             }
         }
 
@@ -103,25 +100,21 @@ object UrlGen {
     fun deleteUrl(urlAddressable: UrlAddressable) = url(urlAddressable.deleteUrlPath)
 
     @JvmStatic
-    fun cssUrl(cssRelativePath: String, request: HttpServletRequest): String {
-        return assetUrl("$cssPath/$cssRelativePath", request)
-    }
+    fun cssUrl(cssRelativePath: String, request: HttpServletRequest): String =
+        assetUrl("$cssPath/$cssRelativePath", request)
 
     @JvmStatic
-    fun jsUrl(jsRelativePath: String, request: HttpServletRequest): String {
-        return assetUrl("$jsPath/$jsRelativePath", request)
-    }
+    fun jsUrl(jsRelativePath: String, request: HttpServletRequest): String =
+        assetUrl("$jsPath/$jsRelativePath", request)
 
     @JvmStatic
-    fun imgUrl(imageRelativePath: String, request: HttpServletRequest): String {
-        return assetUrl("$imagePath/$imageRelativePath", request)
-    }
+    fun imgUrl(imageRelativePath: String, request: HttpServletRequest): String =
+        assetUrl("$imagePath/$imageRelativePath", request)
 
     @JvmStatic
-    fun assetUrl(assetPath: String, request: HttpServletRequest): String {
-        var assetPath = assetPath
-        if (cacheAssets) {
-            assetPath = assetHashPath.getOrPut(assetPath) {
+    fun assetUrl(assetPath: String, request: HttpServletRequest): String =
+        url(if (cacheAssets) {
+            assetHashPath.getOrPut(assetPath) {
                 val assetFile = File(request.session.servletContext.getRealPath(assetPath))
                 if (assetFile.isFile) {
                     var hashedPath = assetPath
@@ -134,26 +127,22 @@ object UrlGen {
                     assetPath
                 }
             }
-        }
-
-        return url(assetPath)
-    }
+        } else {
+            assetPath
+        })
 
     @JvmStatic
     fun url(urlOrPath: String): String {
-        if (urlOrPath.lowercase().startsWith("http")) {
-            return urlOrPath
+        return if (urlOrPath.lowercase().startsWith("http")) {
+            urlOrPath
+        } else {
+            val leadingSlash = if (!urlOrPath.startsWith("/")) "/" else ""
+            "$rootUrlOrPath$leadingSlash$urlOrPath"
         }
-
-        var url = rootUrlOrPath
-        if (!urlOrPath.startsWith("/")) {
-            url += "/"
-        }
-        url += urlOrPath
-
-        return url
     }
 
     @Throws(NoSuchAlgorithmException::class, IOException::class)
-    private fun fileChecksum(file: File): String = Base64.encodeBase64URLSafeString(MessageDigest.getInstance("MD5").digest(Files.readAllBytes(file.toPath())))
+    private fun fileChecksum(file: File): String = Base64.encodeBase64URLSafeString(
+        MessageDigest.getInstance("MD5")
+        .digest(Files.readAllBytes(file.toPath())))
 }

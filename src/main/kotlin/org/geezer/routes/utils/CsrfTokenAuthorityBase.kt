@@ -27,7 +27,8 @@ abstract class CsrfTokenAuthorityBase {
     val log: RoutesLogger
         get() = routesConfiguration.logger
 
-    fun generateCsrfTokenInput(userId: Long, timestamp: Long = System.currentTimeMillis()): String = """<input name="$csrfTokenParameterName" value="${generateCsrfToken(userId, timestamp)}" type="hidden">"""
+    fun generateCsrfTokenInput(userId: Long, timestamp: Long = System.currentTimeMillis()): String =
+        """<input name="$csrfTokenParameterName" value="${generateCsrfToken(userId, timestamp)}" type="hidden">"""
 
     fun assertValidUserAndToken(expectedUserId: Long, request: HttpServletRequest, parameters: RequestParameters) {
         var tokenValidated = false
@@ -71,6 +72,6 @@ abstract class CsrfTokenAuthorityBase {
 
     fun parseToken(token: String): Pair<Long, Long> {
         val buffer = ByteBuffer.wrap(decodeDecrypt(token))
-        return Pair(buffer.long, buffer.long)
+        return buffer.long to buffer.long
     }
 }

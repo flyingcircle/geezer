@@ -5,9 +5,7 @@ internal object RouteTokensParser {
 
     private fun getPathTokens(route: String): List<PathToken> {
         val parameterIndex: Int = findParameterIndex(route)
-        val pathPart = (if (parameterIndex == -1) route else route.substring(0, parameterIndex))
-            .removePrefix("/")
-            .removeSuffix("/")
+        val pathPart = (if (parameterIndex == -1) route else route.substring(0, parameterIndex)).removeSurrounding("/")
 
         return pathPart.split("/").mapIndexedNotNull { i, s ->
             when {
