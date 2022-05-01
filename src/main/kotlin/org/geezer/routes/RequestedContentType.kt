@@ -24,20 +24,19 @@ class RequestedContentType {
      */
     val pathFileExtension: String?
 
-    constructor(context: RequestContext) : this(context.parameters["acceptType"], context.path.fileExtension, context.request.getHeader("Accept"))
+    constructor(context: RequestContext) : this(
+        context.parameters["acceptType"],
+        context.path.fileExtension,
+        context.request.getHeader("Accept"))
 
     constructor(acceptTypeParameter: String? = null, pathFileExtension: String? = null, acceptTypeHeader: String? = null) {
         this.acceptTypeHeader = acceptTypeHeader
         this.pathFileExtension = pathFileExtension
 
-        if (acceptTypeParameter?.isNotBlank() == true) {
-            type = acceptTypeParameter
+        type = if (acceptTypeParameter?.isNotBlank() == true) {
+            acceptTypeParameter
         } else {
-            var type = pathFileExtension?.let { MIMETypes.getMimeTypeFromFileExtension(it) }
-            if (type == null) {
-                type = acceptTypeHeader ?: MIMETypes.HTML
-            }
-            this.type = type
+            pathFileExtension?.let { MIMETypes.getMimeTypeFromFileExtension(it) } ?: acceptTypeHeader ?: MIMETypes.HTML
         }
     }
 

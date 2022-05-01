@@ -15,7 +15,7 @@ class RequestContent(request: HttpServletRequest) {
 
     val text: String by lazy { bytes.decodeToString() }
 
-    private val request: HttpServletRequest? = request
+    private val request: HttpServletRequest = request
 
     private val inputStreamProvider: (() -> InputStream)
 

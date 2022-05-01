@@ -38,10 +38,8 @@ class AssetFilter : Filter {
                 uri = "${uri.substring(0, hashStartIndex)}${uri.substring(hashEndIndex)}"
             }
 
-            request.contextPath?.let { contextPath ->
-                if (contextPath.isNotBlank()) {
-                    uri = uri.replace(contextPath, "")
-                }
+            if (!request.contextPath.isNullOrBlank()) {
+                uri = uri.substring(request.contextPath.length)
             }
 
             (response as HttpServletResponse).addHeader("cache-control", "max-age=$cacheSeconds")

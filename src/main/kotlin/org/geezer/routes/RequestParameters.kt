@@ -1,33 +1,27 @@
 package org.geezer.routes
 
+import arrow.core.foldLeft
 import jakarta.servlet.http.HttpServletRequest
 
 class RequestParameters {
-    val queryString: String?
+    val queryString: String
 
     private val request: HttpServletRequest?
 
-    private var parsedParameters: MutableMap<String, MutableList<String>>? = null
+    private var parsedParameters: Map<String, List<String>> = mapOf()
 
     /**
      * @return A parameter map where the name is the parameter name and the value is the parameter values.
      */
-    val parameters: MutableMap<String, MutableList<String>>
+    val parameters: Map<String, List<String>>
         get() {
-            parsedParameters.let { parsedParameters ->
-                if (parsedParameters != null) {
-                    return parsedParameters
-                }
-                val parsedParameters = mutableMapOf<String, MutableList<String>>()
-                if (request != null) {
-                    val parameterMap: Map<String, Array<String>> = request.parameterMap as Map<String, Array<String>>
-                    for ((name, values) in parameterMap) {
-                        parsedParameters[name] = ArrayList(listOf(*values))
-                    }
-                }
-                this.parsedParameters = parsedParameters
+            if (parsedParameters.isNotEmpty()) {
                 return parsedParameters
             }
+            this.parsedParameters = (request?.parameterMap?.map { (name, values) ->
+                name!! to listOf(*values)
+            } ?: listOf()).toMap()
+            return parsedParameters
         }
 
     val names: List<String> get() = parameters.keys.toList()
@@ -41,88 +35,50 @@ class RequestParameters {
      * @return A parameter map where the name is the parameter name and the value is the parameter value.
      */
     val singleParameters: Map<String, String>
-        get() {
-            parameters.let { parameters ->
-                val singleParameters = mutableMapOf<String, String>()
-                for (entry in parameters.entries) {
+        get() = parameters.entries.mapNotNull { entry ->
                     entry.value.firstOrNull { it.isNotBlank() }?.let { value ->
-                        singleParameters[entry.key] = value
+                        entry.key to value
                     }
-                }
-                return singleParameters
-            }
-        }
+                }.toMap()
 
     constructor(request: HttpServletRequest) {
         this.request = request
-        queryString = request.queryString
+        queryString = request.queryString ?: ""
     }
 
     constructor(parameterMap: Map<String, Array<String>>) {
-        val parsedParameters = mutableMapOf<String, MutableList<String>>()
-        val queryStringBuilder = StringBuilder()
-        var index = 0
-        for ((name, values) in parameterMap) {
-            parsedParameters[name] = values.toMutableList()
-            for (value in values) {
-                if (index > 0) queryStringBuilder.append('&')
-                ++index
-                queryStringBuilder.append(name).append('=').append(value)
-            }
-        }
-        this.parsedParameters = parsedParameters
-        queryString = queryStringBuilder.toString().ifEmpty { null }
+        this.parsedParameters = parameterMap.map { (name, values) ->
+            name to values.toList()
+        }.toMap()
+        queryString = parsedParameters.foldLeft("") { b, it -> "$b${it.key}=${it.value}&" }.dropLast(1)
         request = null
     }
 
     constructor(queryString: String) {
         this.queryString = queryString
         request = null
-
-        val parsedParameters = mutableMapOf<String, MutableList<String>>()
-        val parameterValues = queryString.split("&").toTypedArray()
-        for (parameterValue in parameterValues) {
-            if (parameterValue.trim().isNotEmpty()) {
-                val parameter = parameterValue.split("=").toTypedArray()
-                if (parameter.size == 2) {
-                    val name = parameter[0].trim()
-                    val value = parameter[1].trim()
-                    if (!parsedParameters.containsKey(name)) {
-                        parsedParameters[name] = ArrayList()
-                    }
-                    parsedParameters[name]!!.add(value)
-                }
+        parsedParameters = queryString.split("&")
+            .filter { it.isNotBlank() && it.contains('=') && !it.contains(".*=.*=.*".toRegex()) }
+            .fold(mutableMapOf()) { m, pair ->
+                val (name, value) = pair.split("=").map { it.trim() }
+                val l = m.getOrPut(name) { listOf() }
+                m[name] = l + value
+                m
             }
-        }
-        this.parsedParameters = parsedParameters
     }
 
     fun clone(): RequestParameters {
-        val clonedParameters = mutableMapOf<String, Array<String>>()
-        for (entry in parameters.entries) {
-            val clonedValues = mutableListOf<String>()
-            clonedValues.addAll(entry.value)
-            clonedParameters[entry.key] = clonedValues.toTypedArray()
+        val clonedParameters = parameters.entries.associate {
+            it.key to it.value.toTypedArray()
         }
-
         return RequestParameters(clonedParameters)
     }
 
     val hasParameters: Boolean
-        get() {
-            parsedParameters?.let { parsedParameters -> return parsedParameters.isNotEmpty() }
-
-            if (queryString != null) {
-                return true
-            }
-            if (request != null && request.method.equals("post", ignoreCase = true)) {
-                val contentType = request.getHeader("content-type")
-                if ("application/x-www-form-urlencoded".equals(contentType, ignoreCase = true) || "multipart/form-data".equals(contentType, ignoreCase = true)) {
-                    return true
-                }
-            }
-            return false
-        }
+        get() = parsedParameters.isNotEmpty() || queryString.isNotBlank() ||
+                (request != null && "post" == request.method.lowercase() &&
+                ("application/x-www-form-urlencoded" == request.getHeader("content-type").lowercase() ||
+                "multipart/form-data"== request.getHeader("content-type").lowercase()))
 
     /**
      *
@@ -133,14 +89,6 @@ class RequestParameters {
 
     operator fun contains(name: String): Boolean {
         return parameters.containsKey(name)
-    }
-
-    operator fun set(name: String, value: String) {
-        parameters[name] = mutableListOf(value)
-    }
-
-    operator fun set(name: String, values: List<String>) {
-        parameters[name] = values.toMutableList()
     }
 
     /**
@@ -278,23 +226,6 @@ class RequestParameters {
     fun getOptionalDouble(name: String, defaultValue: Double?): Double? = getDouble(name) ?: defaultValue
 
     fun getDoubles(name: String): List<Double> = parameters[name]?.let { values -> values.mapNotNull { it.trim().toDoubleOrNull() } } ?: listOf()
-
-    /**
-     * Removes the given parameter.
-     *
-     * @param name The parameter name to remove.
-     */
-    fun remove(name: String) {
-        parameters.remove(name)
-    }
-
-    /**
-     * Adds the given parameter. If value is an instanceof java.util.Collection the parameter will be added as multi-value.
-     *
-     * @param name The parameter name.
-     * @param value The parameter value.
-     */
-    fun add(name: String, value: Any) = parameters.getOrPut(name) { mutableListOf() }.add(value.toString())
 
     override fun toString(): String = queryString ?: "No Parameters"
 }

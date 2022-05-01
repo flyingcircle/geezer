@@ -33,8 +33,6 @@ object UrlGen {
 
     var cacheAssets = true
 
-    var cacheSeconds = 100 * 24 * 60 * 60
-
     var cssPath = "/assets/css"
 
     var jsPath = "/assets/js"

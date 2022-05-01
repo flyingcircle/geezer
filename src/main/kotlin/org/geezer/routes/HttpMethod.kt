@@ -9,8 +9,10 @@ enum class HttpMethod {
          * @return The matched HTTP method or `null` if no match is found.
          * @see jakarta.servlet.http.HttpServletRequest.getMethod
          */
-        fun fromServletMethod(servletMethod: String): HttpMethod = values().firstOrNull { it.toString().equals(servletMethod, true) } ?: GET
+        fun fromServletMethod(servletMethod: String): HttpMethod = values()
+            .firstOrNull { it.toString().equals(servletMethod, true) } ?: GET
 
-        fun fromMethod(method: String?): HttpMethod? = method?.let { method -> values().firstOrNull { it.toString().equals(method, true) } }
+        fun fromMethod(method: String?): HttpMethod? = method?.let { method ->
+            values().firstOrNull { it.toString().equals(method, true) } }
     }
 }

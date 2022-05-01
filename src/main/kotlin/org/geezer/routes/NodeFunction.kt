@@ -28,23 +28,20 @@ internal abstract class NodeFunction(val function: KFunction<*>, val instancePoo
             isObjectFunction = false
             routeClass = instanceType
         }
-        val parameterTypes = mutableListOf<FunctionParameterType>()
-        for (valueParameter in function.valueParameters) {
-            val parameterClass = valueParameter.type.classifier as KClass<*>
+        parameterTypes = function.valueParameters.map {
+            val parameterClass = it.type.classifier as KClass<*>
             val clazz = FunctionParameterClass.fromClass(parameterClass) ?: throw IllegalArgumentException("Unsupported parameter type in route function $this of type ${parameterClass.qualifiedName}.")
-            parameterTypes.add(FunctionParameterType(clazz, valueParameter.type.isMarkedNullable))
+            FunctionParameterType(clazz, it.type.isMarkedNullable)
         }
-        this.parameterTypes = parameterTypes
     }
 
     fun call(parameters: List<Any?>): Any? {
-        val parameters = parameters.toMutableList()
-        if (!isObjectFunction) {
-            parameters.add(0, instancePool.borrowRouteInstance(routeClass))
-        }
-
-        try {
-            return function.call(*parameters.toTypedArray())
+        return try {
+            if(!isObjectFunction) {
+                function.call(instancePool.borrowRouteInstance(routeClass), *parameters.toTypedArray())
+            } else {
+                function.call(*parameters.toTypedArray())
+            }
         } catch (e: InvocationTargetException) {
             throw e.targetException
         }

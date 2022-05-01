@@ -35,11 +35,6 @@ class RequestParametersTest {
             "six" to arrayOf("TRUE", "fALse", "TrUe", "1", "Yes", "0", "No"),
             ))
 
-        parameters.add("five", "true")
-
-        assertTrue(parameters.getBoolean("five", false))
-        assertEquals(true, parameters.getBoolean("five"))
-
         assertFalse(parameters.containsContent("xxx"))
         assertFalse(parameters.containsContent("xx"))
         assertTrue(parameters.contains("zero"))
@@ -111,10 +106,6 @@ class RequestParametersTest {
 
         val cloned = parameters.clone()
         assertEquals(parameters.singleParameters, cloned.singleParameters)
-
-        parameters.remove("one")
-        assertFalse(parameters.contains("one"))
-        assertFalse(parameters.containsContent("one"))
     }
 
     @Test

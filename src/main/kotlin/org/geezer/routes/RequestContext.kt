@@ -19,12 +19,12 @@ class RequestContext(val request: HttpServletRequest, val response: HttpServletR
     val requestContent: RequestContent by lazy { RequestContent(request) }
 
     val requestUrl: String by lazy {
-        var requestUrl = request.requestURL.toString()
-        val queryString = request.queryString
-        if (queryString != null && queryString.trim().isNotEmpty()) {
-            requestUrl += "?$queryString"
+        val queryString = request.queryString ?: ""
+        if (queryString.isNotBlank()) {
+            "${request.requestURL}?$queryString"
+        } else {
+            request.requestURL.toString()
         }
-        requestUrl
     }
 
     val url: URL by lazy { URL(requestUrl) }

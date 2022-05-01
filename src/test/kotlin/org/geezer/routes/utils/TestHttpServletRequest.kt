@@ -58,19 +58,17 @@ class TestHttpServletRequest : HttpServletRequest {
         this.httpMethod = httpMethod
         this.httpContextPath = httpContextPath
         this.requestUri = requestUri
-        if (parameters.isNotEmpty()) {
-            httpQueryString = ""
-            var i = 0
-            while (i < parameters.size) {
-                this.parameters[parameters[i]] = arrayOf(parameters[i + 1])
-                if (i > 0) {
-                    httpQueryString += "&"
-                }
-                httpQueryString += parameters[i] + "=" + parameters[i + 1]
-                i += 2
+        this.parameters = run {
+            val p = parameters.asList().withIndex()
+                .groupBy(keySelector = { it.index % 2 }, valueTransform = { it.value })
+            if (p.isNotEmpty()) {
+                p[0]!!.zip(p[1]!!.map { arrayOf(it) }).toMap().toMutableMap()
+            } else {
+                mutableMapOf()
             }
         }
-
+        httpQueryString = parameters.asList().fold("") { b, it ->
+            if (b.endsWith("=")) "$b${it}&" else "$b${it}=" }.dropLast(1)
     }
 
     override fun getAttribute(name: String): Any? {
