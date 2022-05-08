@@ -12,32 +12,26 @@ class RequestPath {
      * @return The number of segments in this path.
      */
     val size: Int
-        get() {
-            return segments.size
-        }
+        get() = segments.size
 
     /**
-     * @return The file name of the path or null if this path does not contain a file name at the end.
+     * @return The file name of the path or empty string.
      */
-    val fileName: String?
+    val fileName: String
         get() {
             return if (segments.isEmpty()) {
-                null
+                ""
             } else {
-                val fileNameCandidate = segments[segments.size - 1]
-                val lastIndex = fileNameCandidate.lastIndexOf('.')
-                if (lastIndex > 0 && lastIndex < fileNameCandidate.length) fileNameCandidate else null
+                val fileNameCandidate = segments.last()
+                if (fileNameCandidate.contains('.')) fileNameCandidate else ""
             }
         }
 
     /**
-     * @return The file name extension or null if the path does contain a file name.
+     * @return The file name extension or empty string.
      */
-    val fileExtension: String?
-        get() {
-            val fileName = fileName
-            return fileName?.substring(fileName.lastIndexOf('.') + 1, fileName.length)
-        }
+    val fileExtension: String
+        get() = fileName.substring(fileName.lastIndexOf('.') + 1)
 
     constructor(servletRequest: HttpServletRequest) : this(parseUrlSegments(servletRequest.requestURI, servletRequest.contextPath))
 
@@ -45,11 +39,7 @@ class RequestPath {
 
     constructor(segments: List<String>) {
         this.segments = segments
-        val pathBuilder = StringBuilder()
-        for (i in segments.indices) {
-            pathBuilder.append('/').append(segments[i])
-        }
-        path = pathBuilder.toString()
+        path = "/${segments.joinToString("/")}"
     }
 
     @Throws(IndexOutOfBoundsException::class)
@@ -81,12 +71,7 @@ class RequestPath {
         return if (segments.size > this.segments.size) {
             false
         } else {
-            for (i in segments.indices) {
-                if (segments[i] != this.segments[i]) {
-                    return false
-                }
-            }
-            true
+            segments.withIndex().all { (i, seg) -> seg == this.segments[i] }
         }
     }
 
@@ -113,25 +98,11 @@ class RequestPath {
 
     companion object {
         fun parseUrlSegments(url: String, contextPath: String = ""): List<String> {
-            var url = url
-            if (url.startsWith(contextPath)) {
-                url = url.substring(contextPath.length, url.length)
-            }
-            url = URLDecoder.decode(url, "UTF-8").trim()
-            val urlSegments: MutableList<String> = ArrayList()
-            if (url.startsWith("/")) {
-                url = url.substring(1, url.length)
-            }
-            var index = url.indexOf('/')
-            while (index != -1) {
-                urlSegments.add(url.substring(0, index))
-                url = url.substring(index + 1, url.length)
-                index = url.indexOf('/')
-            }
-            if (url.isNotEmpty()) {
-                urlSegments.add(url)
-            }
-            return urlSegments
+            return URLDecoder.decode(url.removePrefix(contextPath), "UTF-8")
+                .trim()
+                .removePrefix("/")
+                .split('/')
+                .filter { it.isNotEmpty() }
         }
     }
 }

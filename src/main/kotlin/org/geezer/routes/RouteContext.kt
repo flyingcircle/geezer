@@ -38,84 +38,65 @@ internal class RouteContext(
     val exceptionHandler: ((e: Exception, requestContext: RequestContext) -> Unit)?
 
     init {
-        var newRoute = context?.route
-        if (route != null && route.isNotBlank()) {
-            val route = route
-            if (newRoute == null) {
-                newRoute = "/"
-            } else if (!newRoute.endsWith("/")) {
-                newRoute += "/"
-            }
-
-            newRoute += if (route.startsWith("/")) {
-                route.substring(1)
+        this.route = context?.route.let {
+            if (route != null && route.isNotBlank()) {
+                "${it?.removeSuffix("/") ?: ""}/${route.removePrefix("/")}"
             } else {
-                route
+                it
             }
         }
-        this.route = newRoute
-        val newMethods = context?.methods?.toMutableList() ?: mutableListOf()
-        if (method != null && !newMethods.contains(method)) {
-            newMethods.add(method)
+        this.methods = run {
+            val newMethods = context?.methods?.toMutableSet() ?: mutableSetOf()
+            method?.let { newMethods.add(it) }
+            methods?.let { newMethods.addAll(it.toSet()) }
+            newMethods.toList()
         }
-        if (methods != null) {
-            for (method in methods) {
-                if (!newMethods.contains(method)) {
-                    newMethods.add(method)
-                }
-            }
-        }
-        this.methods = newMethods
-        var newForwardPath = context?.forwardPath
-        if (forwardPath != null && forwardPath.isNotBlank()) {
-            var forwardPath = forwardPath
-            if (newForwardPath == null) {
-                newForwardPath = forwardPath
+        this.forwardPath = context?.forwardPath?.let {
+            if (forwardPath != null && forwardPath.isNotBlank()) {
+                "${it.removeSuffix("/")}/${forwardPath.removePrefix("/")}"
             } else {
-                if (!newForwardPath.endsWith("/")) {
-                    newForwardPath += "/"
-                }
-
-                if (forwardPath.startsWith("/")) {
-                    forwardPath = forwardPath.substring(1)
-                }
-                newForwardPath += forwardPath
+                it
             }
-        }
-        this.forwardPath = newForwardPath
-        val newAcceptTypeRegexs = context?.acceptTypeRegexs?.toMutableList() ?: mutableListOf()
-        if (acceptTypePatterns != null) {
-            for (acceptTypePattern in acceptTypePatterns) {
-                try {
-                    newAcceptTypeRegexs.add(Regex(acceptTypePattern))
-                } catch (e: PatternSyntaxException) {
-                    throw IllegalArgumentException("Invalid accept type pattern $acceptTypePattern.", e)
+        } ?: forwardPath
+        this.acceptTypeRegexs = run {
+            val newAcceptTypeRegexs = context?.acceptTypeRegexs?.toMutableList() ?: mutableListOf()
+            if (acceptTypePatterns != null) {
+                for (acceptTypePattern in acceptTypePatterns) {
+                    try {
+                        newAcceptTypeRegexs.add(Regex(acceptTypePattern))
+                    } catch (e: PatternSyntaxException) {
+                        throw IllegalArgumentException("Invalid accept type pattern $acceptTypePattern.", e)
+                    }
                 }
             }
+            newAcceptTypeRegexs
         }
-        this.acceptTypeRegexs = newAcceptTypeRegexs
         this.contentType = contentType ?: context?.contentType
         this.returnedStringContent = returnedStringContent ?: context?.returnedStringContent
-        val beforeRoutes = context?.beforeRoutes?.toMutableList() ?: mutableListOf()
-        if (beforeFunction != null) {
-            beforeRoutes.add(WrapperFunction(beforeFunction, configuration.routeInstancePool))
-        }
-        if (beforeFunctions != null) {
-            for (beforeFunction in beforeFunctions) {
-                beforeRoutes.add(WrapperFunction(beforeFunction, configuration.routeInstancePool))
+        this.beforeRoutes = run {
+            val beforeRoutes = context?.beforeRoutes?.toMutableList() ?: mutableListOf()
+            beforeFunction?.let {
+                beforeRoutes.add(WrapperFunction(it, configuration.routeInstancePool))
             }
-        }
-        this.beforeRoutes = beforeRoutes
-        val afterRoutes = context?.afterRoutes?.toMutableList() ?: mutableListOf()
-        if (afterFunction != null) {
-            afterRoutes.add(WrapperFunction(afterFunction, configuration.routeInstancePool))
-        }
-        if (afterFunctions != null) {
-            for (afterFunction in afterFunctions) {
-                afterRoutes.add(WrapperFunction(afterFunction, configuration.routeInstancePool))
+            beforeFunctions?.let { fs ->
+                beforeRoutes.addAll(
+                    fs.map { f -> WrapperFunction(f, configuration.routeInstancePool) }
+                )
             }
+            beforeRoutes
         }
-        this.afterRoutes = afterRoutes
+        this.afterRoutes = run {
+            val afterRoutes = context?.afterRoutes?.toMutableList() ?: mutableListOf()
+            afterFunction?.let {
+                afterRoutes.add(WrapperFunction(it, configuration.routeInstancePool))
+            }
+            afterFunctions?.let { fs ->
+                afterRoutes.addAll(
+                    fs.map { f-> WrapperFunction(f, configuration.routeInstancePool) }
+                )
+            }
+            afterRoutes
+        }
         this.exceptionHandler = exceptionHandler ?: context?.exceptionHandler
     }
 }
