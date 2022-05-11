@@ -108,145 +108,49 @@ internal class RouteNode(
                     when {
                         pathCriterionQueue.isNotEmpty() -> {
                             val criterion = pathCriterionQueue.removeAt(0)
+                            fun pathParamInner(typeName: String, typeFun: (Int) -> Any?) {
+                                val value = typeFun(criterion.pathIndex)
+                                if (value == null && !parameterType.optional) {
+                                    throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into $typeName for route node function $function parameter at index $index.")
+                                }
+                                parameters.add(value)
+                            }
                             when (parameterType.clazz) {
-                                FunctionParameterClass.BooleanClass -> {
-                                    val value = context.path.getBoolean(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Boolean for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.ByteClass -> {
-                                    val value = context.path.getByte(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Byte for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.ShortClass -> {
-                                    val value = context.path.getShort(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Short for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.IntClass -> {
-                                    val value = context.path.getInt(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Int for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.LongClass -> {
-                                    val value = context.path.getLong(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Long for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.FloatClass -> {
-                                    val value = context.path.getFloat(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Float for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.DoubleClass -> {
-                                    val value = context.path.getDouble(criterion.pathIndex)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce path ${context.path} at index ${criterion.pathIndex} into Double for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
+                                FunctionParameterClass.BooleanClass -> pathParamInner("Boolean") { context.path.getBoolean(it) }
+                                FunctionParameterClass.ByteClass -> pathParamInner("Byte") { context.path.getByte(it) }
+                                FunctionParameterClass.ShortClass -> pathParamInner("Short") { context.path.getShort(it) }
+                                FunctionParameterClass.IntClass -> pathParamInner("Int") { context.path.getInt(it) }
+                                FunctionParameterClass.LongClass -> pathParamInner("Long") { context.path.getLong(it) }
+                                FunctionParameterClass.FloatClass -> pathParamInner("Float") { context.path.getFloat(it) }
+                                FunctionParameterClass.DoubleClass -> pathParamInner("Double") { context.path.getDouble(it) }
                                 FunctionParameterClass.StringClass -> {
                                     if (criterion.type == PathCriterionType.Gobble) {
                                         parameters.add(context.path.substring(criterion.pathIndex).toString())
                                     } else {
-                                        val value = context.path.getOrNull(criterion.pathIndex)
-                                        if (value == null && !parameterType.optional) {
-                                            throw IllegalArgumentException("Unable to access path ${context.path} at index ${criterion.pathIndex} for route node function $function parameter at index $index.")
-                                        }
-                                        parameters.add(value)
+                                        pathParamInner("String") { context.path.getOrNull(it) }
                                     }
                                 }
-
                                 else -> throw IllegalStateException("Route node function $function has unsupported parameter type ${parameterType.clazz}.")
                             }
                         }
                         parameterCriterionQueue.isNotEmpty() -> {
                             val criterion = parameterCriterionQueue.removeAt(0)
+                            fun paramParamInner(typeName: String, typeFun: (String) -> Any?) {
+                                val value = typeFun(criterion.name)
+                                if (value == null && !parameterType.optional) {
+                                    throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into $typeName for route node function $function parameter at index $index.")
+                                }
+                                parameters.add(value)
+                            }
                             when (parameterType.clazz) {
-                                FunctionParameterClass.BooleanClass -> {
-                                    val value = context.parameters.getBoolean(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Boolean for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.ByteClass -> {
-                                    val value = context.parameters.getByte(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Byte for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.ShortClass -> {
-                                    val value = context.parameters.getShort(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Short for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.IntClass -> {
-                                    val value = context.parameters.getInt(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Int for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.LongClass -> {
-                                    val value = context.parameters.getLong(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Long for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.FloatClass -> {
-                                    val value = context.parameters.getFloat(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Float for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.DoubleClass -> {
-                                    val value = context.parameters.getDouble(criterion.name)
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to coerce parameter ${criterion.name} into Double for route node function $function parameter at index $index.")
-                                    }
-                                    parameters.add(value)
-                                }
-
-                                FunctionParameterClass.StringClass -> {
-                                    val value = context.parameters[criterion.name]
-                                    if (value == null && !parameterType.optional) {
-                                        throw IllegalArgumentException("Unable to access parameter ${criterion.name} for route node function $function.")
-                                    }
-                                    parameters.add(value)
-                                }
-
+                                FunctionParameterClass.BooleanClass -> paramParamInner("Boolean") { context.parameters.getBoolean(it) }
+                                FunctionParameterClass.ByteClass -> paramParamInner("Byte") { context.parameters.getByte(it) }
+                                FunctionParameterClass.ShortClass -> paramParamInner("Short") { context.parameters.getShort(it) }
+                                FunctionParameterClass.IntClass -> paramParamInner("Int") { context.parameters.getInt(it) }
+                                FunctionParameterClass.LongClass -> paramParamInner("Long") { context.parameters.getLong(it) }
+                                FunctionParameterClass.FloatClass -> paramParamInner("Float") { context.parameters.getFloat(it) }
+                                FunctionParameterClass.DoubleClass -> paramParamInner("Double") { context.parameters.getDouble(it) }
+                                FunctionParameterClass.StringClass -> paramParamInner("String") { context.parameters[it] }
                                 else -> throw IllegalStateException("Route node function $function has unsupported parameter type ${parameterType.clazz}.")
                             }
                         }
@@ -260,19 +164,12 @@ internal class RouteNode(
     }
 
     private fun forwardDispatch(path: String, servletRequest: HttpServletRequest, servletResponse: HttpServletResponse) {
-        val path = path
         if (path.startsWith("redirect:")) {
             servletResponse.sendRedirect(configuration.redirectHandler.getRedirectUrl(path.substring(9, path.length), servletRequest, servletResponse))
+        } else if (path.isNotBlank()) {
+            servletRequest.getRequestDispatcher("${forwardPath.removeSuffix("/")}/${path.removePrefix("/")}").forward(servletRequest, servletResponse)
         } else {
-            var fullPath = forwardPath
-            if (path.isNotBlank()) {
-                if (!fullPath.endsWith("/")) {
-                    fullPath += "/"
-                }
-
-                fullPath += if (path.startsWith("/")) path.substring(1) else path
-            }
-            servletRequest.getRequestDispatcher(fullPath).forward(servletRequest, servletResponse)
+            servletRequest.getRequestDispatcher(forwardPath).forward(servletRequest, servletResponse)
         }
     }
 

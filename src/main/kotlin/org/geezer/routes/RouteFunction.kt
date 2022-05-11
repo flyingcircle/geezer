@@ -10,16 +10,13 @@ internal class RouteFunction(function: KFunction<*>, instancePool: RouteInstance
 
     init {
         val returnClass = function.returnType.classifier as KClass<*>
-        responseType = if (returnClass == ByteArray::class) {
-            FunctionResponseType.BytesContent
-        } else if (returnClass == Unit::class) {
-            FunctionResponseType.Unit
-        } else if (returnClass.isSubclassOf(InputStream::class)) {
-            FunctionResponseType.StreamContent
-        } else if (returnClass.isSubclassOf(CharSequence::class)) {
-            if (returnedStringContent) FunctionResponseType.StringContent else FunctionResponseType.ForwardDispatch
-        } else {
-            FunctionResponseType.StringContent
+        responseType = when {
+            returnClass == ByteArray::class -> FunctionResponseType.BytesContent
+            returnClass == Unit::class -> FunctionResponseType.Unit
+            returnClass.isSubclassOf(InputStream::class) -> FunctionResponseType.StreamContent
+            returnClass.isSubclassOf(CharSequence::class) ->
+                if (returnedStringContent) FunctionResponseType.StringContent else FunctionResponseType.ForwardDispatch
+            else -> FunctionResponseType.StringContent
         }
     }
 }
