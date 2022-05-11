@@ -9,29 +9,17 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 
 class RoutingFilter : Filter {
-    val onlyRegexs = mutableListOf<Regex>()
-
-    val exceptRegexs = mutableListOf<Regex>()
+    private lateinit var onlyRegexs: List<Regex>
+    private lateinit var exceptRegexs: List<Regex>
 
     override fun init(filterConfig: FilterConfig) {
         val onlyInitParam = filterConfig.getInitParameter("ONLY")
-        if (onlyInitParam != null) {
-            val onlyInitParams = onlyInitParam.split(",").toTypedArray()
-            for (pattern in onlyInitParams) {
-                if (pattern.isNotBlank()) {
-                    onlyRegexs.add(Regex(pattern.trim()))
-                }
-            }
+        onlyInitParam?.split(",")?.toTypedArray()?.let { onlyInitParams ->
+            onlyRegexs = onlyInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
         }
-
         val exceptInitParam = filterConfig.getInitParameter("EXCEPT")
-        if (exceptInitParam != null) {
-            val exceptInitParams = exceptInitParam.split(",").toTypedArray()
-            for (pattern in exceptInitParams) {
-                if (pattern.isNotBlank()) {
-                    exceptRegexs.add(Regex(pattern.trim()))
-                }
-            }
+        exceptInitParam?.split(",")?.toTypedArray()?.let { exceptInitParams ->
+            exceptRegexs = exceptInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
         }
     }
 
