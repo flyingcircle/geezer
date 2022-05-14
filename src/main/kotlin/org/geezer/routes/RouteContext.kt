@@ -1,15 +1,18 @@
 package org.geezer.routes
 
+import org.geezer.Path
+import org.geezer.Path.Companion.PathMonoid.combine
+import org.geezer.Path.Companion.PathMonoid.empty
 import java.util.regex.PatternSyntaxException
 import kotlin.reflect.KFunction
 
 internal class RouteContext(
     configuration: RoutesConfiguration,
     context: RouteContext? = null,
-    route: String? = null,
+    route: Path = empty(),
     method: HttpMethod? = null,
     methods: List<HttpMethod>? = null,
-    forwardPath: String? = null,
+    forwardPath: Path = empty(),
     acceptTypePatterns: List<String>? = null,
     contentType: String?,
     returnedStringContent: Boolean?,
@@ -19,13 +22,13 @@ internal class RouteContext(
     afterFunctions: List<KFunction<*>>? = null,
     exceptionHandler: ((e: Exception, requestContext: RequestContext) -> Unit)? = null
 ) {
-    val route: String?
+    val route: Path
 
     val methods: List<HttpMethod>
 
     val acceptTypeRegexs: List<Regex>
 
-    val forwardPath: String?
+    val forwardPath: Path
 
     val contentType: String?
 
@@ -38,26 +41,14 @@ internal class RouteContext(
     val exceptionHandler: ((e: Exception, requestContext: RequestContext) -> Unit)?
 
     init {
-        this.route = context?.route.let {
-            if (route != null && route.isNotBlank()) {
-                "${it?.removeSuffix("/") ?: ""}/${route.removePrefix("/")}"
-            } else {
-                it
-            }
-        }
+        this.route = context?.route.let { (it ?: empty()).combine(route) }
         this.methods = run {
             val newMethods = context?.methods?.toMutableSet() ?: mutableSetOf()
             method?.let { newMethods.add(it) }
             methods?.let { newMethods.addAll(it.toSet()) }
             newMethods.toList()
         }
-        this.forwardPath = context?.forwardPath?.let {
-            if (forwardPath != null && forwardPath.isNotBlank()) {
-                "${it.removeSuffix("/")}/${forwardPath.removePrefix("/")}"
-            } else {
-                it
-            }
-        } ?: forwardPath
+        this.forwardPath = context?.forwardPath?.combine(forwardPath) ?: empty()
         this.acceptTypeRegexs = run {
             val newAcceptTypeRegexs = context?.acceptTypeRegexs?.toMutableList() ?: mutableListOf()
             if (acceptTypePatterns != null) {

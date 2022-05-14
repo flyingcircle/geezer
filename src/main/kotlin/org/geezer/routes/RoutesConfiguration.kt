@@ -7,13 +7,12 @@ class RoutesConfiguration {
      * The global path prepended to all route paths. For example if you want your route objects to process request that
      * start with "/api", set this variable to "/api" and then all route class paths will get prepended with this value.
      */
-    var rootPath: String? = null
+    var rootPath: String = ""
 
     /**
-     * The root directory prepended to all file resource forward paths. If you want each Route to specify the full forward
-     * path, set this variable to null.
+     * The root directory prepended to all file resource forward paths.
      */
-    var rootForwardPath: String? = "/WEB-INF/jsps"
+    var rootForwardPath: String = "/WEB-INF/jsps"
 
     /**
      * Are route path and parameter matching case-insensitive?
@@ -25,7 +24,7 @@ class RoutesConfiguration {
      * [RouteNode.contentType], or by explicitly calling [jakarta.servlet.http.HttpServletResponse.setContentType] in the
      * route method.
      */
-    var defaultContentType: String? = null
+    var defaultContentType: String = ""
 
     /**
      * If true, strings returned from route methods are sent back as the content. If false, returned strings are interpreted as
