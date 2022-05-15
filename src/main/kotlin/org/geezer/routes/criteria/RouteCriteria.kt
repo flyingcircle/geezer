@@ -22,57 +22,37 @@ internal data class RouteCriteria(
         if (!methods.contains(context.method) ||
             !hasGobblePathCriterion && context.path.size != pathCriteria.size) return false
 
-        PathCheck@
-        for ((index, segment) in context.path.segments.withIndex()) {
-            if (index > pathCriteria.size) {
-                return false
-            }
+        val segments = context.path.segments.withIndex()
+        if (segments.any { (i,_) -> i > pathCriteria.size }) return false
 
-            val pathCriteria = pathCriteria[index]
-            when (pathCriteria.type) {
-                PathCriterionType.Gobble -> break@PathCheck
-                PathCriterionType.Exact -> {
-                    if (!segment.equals(pathCriteria.value, ignoreCase)) {
-                        return false
-                    }
-                }
-                PathCriterionType.Regex -> {
-                    if (!pathCriteria.regex.matches(segment)) {
-                        return false
-                    }
-                }
-            }
-        }
+        val valueMismatch = segments
+            .map { (i,s) -> pathCriteria[i] to s }
+            .firstOrNull() { when(it.first.type) {
+                PathCriterionType.Exact -> !it.second.equals(it.first.value, ignoreCase)
+                PathCriterionType.Regex -> !it.first.regex.matches(it.second)
+                PathCriterionType.Gobble -> true
+            } }
+            ?.first
+        if (valueMismatch != null && valueMismatch.type != PathCriterionType.Gobble) return false
 
         if (acceptTypePatterns.isNotEmpty() &&
             acceptTypePatterns.none { it.containsMatchIn(context.requestedContentType.type) }) {
             return false
         }
 
-        for (parameterCriterion in parameterCriteria) {
-            val parameterValues = context.parameters.getValues(parameterCriterion.name)
-            if (parameterValues.isEmpty()) {
-                if (!parameterCriterion.optional) {
-                    return false
-                } else {
-                    continue
-                }
-            }
+        val paramValues = parameterCriteria
+            .map { it to context.parameters.getValues(it.name) }
+            .filterNot { it.second.isEmpty() && it.first.optional }
+        // remaining empties are non-optional
+        if (paramValues.any { it.second.isEmpty() }) return false
 
-            when (parameterCriterion.type) {
-                ParameterCriterionType.Exact -> {
-                    if (parameterValues.none { parameterCriterion.value.equals(it, ignoreCase) }) {
-                        return false
-                    }
-                }
-
-                ParameterCriterionType.Regex -> {
-                    if (parameterValues.none { parameterCriterion.regex.matches(it) }) {
-                        return false
-                    }
-                }
+        val paramValueNoMatches = paramValues.any {
+            when(it.first.type) {
+                ParameterCriterionType.Exact ->  it.second.none { value -> it.first.value.equals(value, ignoreCase) }
+                ParameterCriterionType.Regex ->  it.second.none { value -> it.first.regex.matches(value) }
             }
         }
+        if (paramValueNoMatches) return false
 
         return true
     }

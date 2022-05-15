@@ -63,21 +63,21 @@ class LayoutsFilter: Filter {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val httpRequest = request as HttpServletRequest
         var httpResponse = response as HttpServletResponse
-        if (!requestExcludedFromPatterns(httpRequest) && layoutPatterns.layoutDecider.isCandidateForLayout(httpRequest)) {
-            val httpResponseBuffer = HttpBufferedResponse(httpRequest, httpResponse)
-            chain.doFilter(httpRequest, httpResponseBuffer)
-            if (httpResponseBuffer.hasBufferedContent() && httpResponseBuffer.isHtmlContent && !trueValue(httpRequest.getAttribute(NO_LAYOUT))) {
-                val layoutName = httpRequest.getAttribute(LAYOUT) as String?
-                val layout = layoutPatterns.layouts.getOrDefault(layoutName, layoutPatterns.defaultLayout)
-                httpResponse = HttpMixedOutputResponse(httpResponse)
-                httpRequest.setAttribute(VIEW, View(httpResponseBuffer.content!!, httpResponse))
-                httpRequest.getRequestDispatcher(layout.jspPath).forward(httpRequest, httpResponse)
-            } else {
-                httpResponseBuffer.pushContent()
-            }
-        } else {
+        if (requestExcludedFromPatterns(httpRequest) || !layoutPatterns.layoutDecider.isCandidateForLayout(httpRequest)) {
             chain.doFilter(httpRequest, httpResponse)
+            return
         }
+        val httpResponseBuffer = HttpBufferedResponse(httpRequest, httpResponse)
+        chain.doFilter(httpRequest, httpResponseBuffer)
+        if (!httpResponseBuffer.hasBufferedContent() || !httpResponseBuffer.isHtmlContent || trueValue(httpRequest.getAttribute(NO_LAYOUT))) {
+            httpResponseBuffer.pushContent()
+            return
+        }
+        val layoutName = httpRequest.getAttribute(LAYOUT) as String?
+        val layout = layoutPatterns.layouts.getOrDefault(layoutName, layoutPatterns.defaultLayout)
+        httpResponse = HttpMixedOutputResponse(httpResponse)
+        httpRequest.setAttribute(VIEW, View(httpResponseBuffer.content!!, httpResponse))
+        httpRequest.getRequestDispatcher(layout.jspPath).forward(httpRequest, httpResponse)
     }
 
     private fun requestExcludedFromPatterns(httpRequest: HttpServletRequest): Boolean {

@@ -69,31 +69,24 @@ class View(private val content: ByteArray, private val response: ServletResponse
      */
     @Throws(IOException::class)
     fun yield(tagName: String, pageContext: PageContext) {
-        /*
-     * TODO JSPs using a different encoding then the system default will break here if the values for the characters in the opening
-     * or closing tags are different. Not sure how to grab the encoding from the JSP that created the current content automatically.
-     * Maybe add a filter parameter to specify the encoding if it's different then default.
-     */
         val tagBytes = tagName.toByteArray()
         val openTag = makeOpenTag(tagBytes)
         val openTagIndex = indexOf(content, openTag)
-        if (openTagIndex >= 0) {
-            val closedTag = makeCloseTag(tagBytes)
-            val closeTagIndex = lastIndexOf(content, closedTag)
-            if (closeTagIndex > openTagIndex) {
-                val startIndex = openTagIndex + openTag.size
-                val length = closeTagIndex - startIndex
-                /*
-                 * We're mixing the JSPWriter and the ServletOutStream here because we don't want to take the hit to turn
-                 * content back into a String. Need to make sure everything written to JSPWriter to this point is flushed so
-                 * the content doesn't get out of order.
-                 */
-                pageContext.out.flush()
-                val out: OutputStream = response.outputStream
-                out.write(content, startIndex, length)
-                out.flush()
-            }
-        }
+        if (openTagIndex < 0) return
+        val closedTag = makeCloseTag(tagBytes)
+        val closeTagIndex = lastIndexOf(content, closedTag)
+        if (closeTagIndex <= openTagIndex) return
+        val startIndex = openTagIndex + openTag.size
+        val length = closeTagIndex - startIndex
+        /*
+         * We're mixing the JSPWriter and the ServletOutStream here because we don't want to take the hit to turn
+         * content back into a String. Need to make sure everything written to JSPWriter to this point is flushed so
+         * the content doesn't get out of order.
+         */
+        pageContext.out.flush()
+        val out: OutputStream = response.outputStream
+        out.write(content, startIndex, length)
+        out.flush()
     }
 
     private fun makeCloseTag(tagNameBytes: ByteArray) = byteArrayOf(LESS_THAN, SOLIDUS, *tagNameBytes, GREATER_THAN)
@@ -108,21 +101,13 @@ class View(private val content: ByteArray, private val response: ServletResponse
      * @throws IOException
      */
     operator fun contains(tagName: String): Boolean {
-        /*
-     * TODO JSPs using a different encoding then the system default will break here if the values for the characters in the opening
-     * or closing tags are different. Not sure how to grab the encoding from the JSP that created the current content automatically.
-     * Maybe add a filter parameter to specify the encoding if it's different then default.
-     */
         val tagBytes = tagName.toByteArray()
         val openTag = makeOpenTag(tagBytes)
         val openTagIndex = indexOf(content, openTag)
-        return if (openTagIndex >= 0) {
-            val closedTag = makeCloseTag(tagBytes)
-            val closeTagIndex = lastIndexOf(content, closedTag)
-            closeTagIndex > openTagIndex
-        } else {
-            false
-        }
+        if (openTagIndex < 0) return false
+        val closedTag = makeCloseTag(tagBytes)
+        val closeTagIndex = lastIndexOf(content, closedTag)
+        return closeTagIndex > openTagIndex
     }
 }
 
