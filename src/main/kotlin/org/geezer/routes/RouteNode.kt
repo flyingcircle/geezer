@@ -29,9 +29,7 @@ internal class RouteNode(
     fun invoke(context: RequestContext) {
         var routeFunctionCalled = false
         try {
-            for (beforeFunction in beforeFunctions) {
-                beforeFunction.call(getParameters(beforeFunction, context))
-            }
+            beforeFunctions.forEach { it.call(getParameters(it, context)) }
 
             routeFunctionCalled = true
             val result = function.call(getParameters(function, context))
@@ -75,11 +73,11 @@ internal class RouteNode(
             }
         } finally {
             if (routeFunctionCalled) {
-                for (afterFunction in afterFunctions) {
+                afterFunctions.forEach {
                     try {
-                        afterFunction.call(getParameters(afterFunction, context))
+                        it.call(getParameters(it, context))
                     } catch (e: Exception) {
-                        configuration.logger.error("After function $afterFunction for route function $function threw error.", e)
+                        configuration.logger.error("After function $it for route function $function threw error.", e)
                     }
                 }
             }

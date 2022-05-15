@@ -43,50 +43,44 @@ internal class RouteContext(
     init {
         this.route = context?.route.let { (it ?: empty()).combine(route) }
         this.methods = run {
-            val newMethods = context?.methods?.toMutableSet() ?: mutableSetOf()
-            method?.let { newMethods.add(it) }
-            methods?.let { newMethods.addAll(it.toSet()) }
-            newMethods.toList()
+            val contextMethods = context?.methods?.toSet() ?: setOf()
+            val newMethod = method?.let { setOf(it) } ?: setOf()
+            val newMethods = methods?.toSet() ?: setOf()
+            (contextMethods union newMethod union newMethods).toList()
         }
         this.forwardPath = context?.forwardPath?.combine(forwardPath) ?: empty()
         this.acceptTypeRegexs = run {
-            val newAcceptTypeRegexs = context?.acceptTypeRegexs?.toMutableList() ?: mutableListOf()
-            if (acceptTypePatterns != null) {
-                for (acceptTypePattern in acceptTypePatterns) {
-                    try {
-                        newAcceptTypeRegexs.add(Regex(acceptTypePattern))
-                    } catch (e: PatternSyntaxException) {
-                        throw IllegalArgumentException("Invalid accept type pattern $acceptTypePattern.", e)
-                    }
+            val contextRegexs = context?.acceptTypeRegexs ?: listOf()
+            val newAcceptTypeRegexs = acceptTypePatterns?.map {
+                try {
+                    Regex(it)
+                } catch (e: PatternSyntaxException) {
+                    throw IllegalArgumentException("Invalid accept type pattern $it.", e)
                 }
-            }
-            newAcceptTypeRegexs
+            } ?: listOf()
+            contextRegexs + newAcceptTypeRegexs
         }
         this.contentType = contentType ?: context?.contentType
         this.returnedStringContent = returnedStringContent ?: context?.returnedStringContent
         this.beforeRoutes = run {
-            val beforeRoutes = context?.beforeRoutes?.toMutableList() ?: mutableListOf()
-            beforeFunction?.let {
-                beforeRoutes.add(WrapperFunction(it, configuration.routeInstancePool))
-            }
-            beforeFunctions?.let { fs ->
-                beforeRoutes.addAll(
-                    fs.map { f -> WrapperFunction(f, configuration.routeInstancePool) }
-                )
-            }
-            beforeRoutes
+            val contextBeforeRoutes = context?.beforeRoutes ?: listOf()
+            val beforeFunc = beforeFunction?.let {
+                listOf(WrapperFunction(it, configuration.routeInstancePool))
+            } ?: listOf()
+            val beforeFuncs = beforeFunctions?.let { fs ->
+                fs.map { f -> WrapperFunction(f, configuration.routeInstancePool) }
+            } ?: listOf()
+            contextBeforeRoutes + beforeFunc + beforeFuncs
         }
         this.afterRoutes = run {
-            val afterRoutes = context?.afterRoutes?.toMutableList() ?: mutableListOf()
-            afterFunction?.let {
-                afterRoutes.add(WrapperFunction(it, configuration.routeInstancePool))
-            }
-            afterFunctions?.let { fs ->
-                afterRoutes.addAll(
-                    fs.map { f-> WrapperFunction(f, configuration.routeInstancePool) }
-                )
-            }
-            afterRoutes
+            val contextAfterRoutes = context?.afterRoutes ?: listOf()
+            val afterFunc = afterFunction?.let {
+                listOf(WrapperFunction(it, configuration.routeInstancePool))
+            } ?: listOf()
+            val afterFuncs = afterFunctions?.let { fs ->
+                fs.map { f-> WrapperFunction(f, configuration.routeInstancePool) }
+            } ?: listOf()
+            contextAfterRoutes + afterFunc + afterFuncs
         }
         this.exceptionHandler = exceptionHandler ?: context?.exceptionHandler
     }
