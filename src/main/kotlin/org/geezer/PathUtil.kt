@@ -17,7 +17,13 @@ data class Path(val value: String) {
             override fun empty() = Path("")
 
             override fun Path.combine(b: Path): Path {
-                return Path("${this.value.removeSuffix("/")}/${b.value.removePrefix("/")}")
+                return if (this.value.isEmpty()) {
+                    b
+                } else if(b.value.isEmpty()) {
+                    this
+                } else {
+                    Path("${this.value.removeSuffix("/")}/${b.value.removePrefix("/")}")
+                }
             }
 
         }

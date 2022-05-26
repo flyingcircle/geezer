@@ -62,7 +62,7 @@ class LayoutsFilter: Filter {
     @Throws(IOException::class, ServletException::class)
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val httpRequest = request as HttpServletRequest
-        var httpResponse = response as HttpServletResponse
+        val httpResponse = response as HttpServletResponse
         if (requestExcludedFromPatterns(httpRequest) || !layoutPatterns.layoutDecider.isCandidateForLayout(httpRequest)) {
             chain.doFilter(httpRequest, httpResponse)
             return
@@ -75,9 +75,9 @@ class LayoutsFilter: Filter {
         }
         val layoutName = httpRequest.getAttribute(LAYOUT) as String?
         val layout = layoutPatterns.layouts.getOrDefault(layoutName, layoutPatterns.defaultLayout)
-        httpResponse = HttpMixedOutputResponse(httpResponse)
-        httpRequest.setAttribute(VIEW, View(httpResponseBuffer.content!!, httpResponse))
-        httpRequest.getRequestDispatcher(layout.jspPath).forward(httpRequest, httpResponse)
+        val httpMixedOutputResponse = HttpMixedOutputResponse(httpResponse)
+        httpRequest.setAttribute(VIEW, View(httpResponseBuffer.content!!, httpMixedOutputResponse))
+        httpRequest.getRequestDispatcher(layout.jspPath).forward(httpRequest, httpMixedOutputResponse)
     }
 
     private fun requestExcludedFromPatterns(httpRequest: HttpServletRequest): Boolean {

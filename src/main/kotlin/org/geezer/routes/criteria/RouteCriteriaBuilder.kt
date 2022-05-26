@@ -65,64 +65,60 @@ internal object RouteCriteriaBuilder {
     ): Int {
         var numberPotentialRouteParameters1 = numberPotentialRouteParameters
         for ((index, token) in tokens.pathTokens.withIndex()) {
-            when (token) {
-                is ExactValuePathToken -> {
-                    pathCriteria.add(PathCriterion(index, PathCriterionType.Exact, token.value))
+            if (token is ExactValuePathToken) {
+                pathCriteria.add(PathCriterion(index, PathCriterionType.Exact, token.value))
+            } else {
+                val parameterTypeFromRoute =
+                    if (numberPotentialRouteParameters1 < parameterTypesFromRoutes.size) parameterTypesFromRoutes[numberPotentialRouteParameters1] else null
+                if (parameterTypeFromRoute != null && parameterTypeFromRoute.optional) {
+                    throw IllegalArgumentException("Route function $function has unsupported optional path parameter ${parameterTypeFromRoute.clazz.clazz.qualifiedName} at index $numberPotentialRouteParameters1.")
                 }
 
-                else -> {
-                    val parameterTypeFromRoute =
-                        if (numberPotentialRouteParameters1 < parameterTypesFromRoutes.size) parameterTypesFromRoutes[numberPotentialRouteParameters1] else null
-                    if (parameterTypeFromRoute != null && parameterTypeFromRoute.optional) {
-                        throw IllegalArgumentException("Route function $function has unsupported optional path parameter ${parameterTypeFromRoute.clazz.clazz.qualifiedName} at index $numberPotentialRouteParameters1.")
+                when (token) {
+                    is WildcardPathToken -> {
+                        pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, "*", WildCardRegex, 0))
+                        if (parameterTypeFromRoute != null && parameterTypeFromRoute.clazz != FunctionParameterClass.StringClass) {
+                            throw IllegalArgumentException("Route function $function has wildcard path token mapped to ${parameterTypeFromRoute.clazz.clazz.simpleName} but wildcards must be mapped to a String parameter.")
+                        }
                     }
 
-                    when (token) {
-                        is WildcardPathToken -> {
-                            pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, "*", WildCardRegex, 0))
-                            if (parameterTypeFromRoute != null && parameterTypeFromRoute.clazz != FunctionParameterClass.StringClass) {
-                                throw IllegalArgumentException("Route function $function has wildcard path token mapped to ${parameterTypeFromRoute.clazz.clazz.simpleName} but wildcards must be mapped to a String parameter.")
-                            }
+                    is PatternPathToken -> {
+                        try {
+                            val criterion =
+                                PathCriterion(index, PathCriterionType.Regex, token.pattern, Regex(token.pattern))
+                            pathCriteria.add(criterion)
+                            numberPotentialRouteParameters1 += criterion.numberPatternGroups.coerceAtLeast(1)
+                        } catch (e: PatternSyntaxException) {
+                            throw IllegalArgumentException(
+                                "Route function $function has invalid path regular expression pattern ${token.pattern}.",
+                                e
+                            )
                         }
-
-                        is PatternPathToken -> {
-                            try {
-                                val criterion =
-                                    PathCriterion(index, PathCriterionType.Regex, token.pattern, Regex(token.pattern))
-                                pathCriteria.add(criterion)
-                                numberPotentialRouteParameters1 += criterion.numberPatternGroups.coerceAtLeast(1)
-                            } catch (e: PatternSyntaxException) {
-                                throw IllegalArgumentException(
-                                    "Route function $function has invalid path regular expression pattern ${token.pattern}.",
-                                    e
-                                )
-                            }
-                        }
-
-                        is FunctionParameterPathToken -> {
-                            val regex =
-                                parameterTypesFromRoutes.getOrNull(numberPotentialRouteParameters1)?.clazz?.routeRegex
-                                    ?: throw IllegalArgumentException("Route function $function has path pattern {} with no matching parameter.")
-                            pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, regex.pattern, regex))
-                        }
-
-                        is SymbolPathToken -> {
-                            val regex = configuration.symbolsToRegexs[token.symbol]
-                                ?: throw IllegalArgumentException("Route function $function references undefined symbol ${token.symbol} in path token.")
-                            pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, regex.pattern, regex))
-                        }
-
-                        is GobblePathToken -> {
-                            if (index < tokens.pathTokens.size - 1) {
-                                throw IllegalArgumentException("Gobble path token in $function must be last.")
-                            }
-                            pathCriteria.add(PathCriterion(index, PathCriterionType.Gobble, "**"))
-                        }
-
-                        else -> throw IllegalArgumentException("Invalid path token type ${token.javaClass.kotlin.qualifiedName}.")
                     }
-                    ++numberPotentialRouteParameters1
+
+                    is FunctionParameterPathToken -> {
+                        val regex =
+                            parameterTypesFromRoutes.getOrNull(numberPotentialRouteParameters1)?.clazz?.routeRegex
+                                ?: throw IllegalArgumentException("Route function $function has path pattern {} with no matching parameter.")
+                        pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, regex.pattern, regex))
+                    }
+
+                    is SymbolPathToken -> {
+                        val regex = configuration.symbolsToRegexs[token.symbol]
+                            ?: throw IllegalArgumentException("Route function $function references undefined symbol ${token.symbol} in path token.")
+                        pathCriteria.add(PathCriterion(index, PathCriterionType.Regex, regex.pattern, regex))
+                    }
+
+                    is GobblePathToken -> {
+                        if (index < tokens.pathTokens.size - 1) {
+                            throw IllegalArgumentException("Gobble path token in $function must be last.")
+                        }
+                        pathCriteria.add(PathCriterion(index, PathCriterionType.Gobble, "**"))
+                    }
+
+                    else -> throw IllegalArgumentException("Invalid path token type ${token.javaClass.kotlin.qualifiedName}.")
                 }
+                ++numberPotentialRouteParameters1
             }
         }
         return numberPotentialRouteParameters1
@@ -138,94 +134,92 @@ internal object RouteCriteriaBuilder {
     ): Int {
         var numberPotentialRouteParameters1 = numberPotentialRouteParameters
         for (token in tokens.parameterTokens) {
-            when (token) {
-                is ExactValueParameterToken -> {
-                    parameterCriteria.add(
-                        ParameterCriterion(
-                            token.name,
-                            ParameterCriterionType.Exact,
-                            token.value,
-                            token.optional
-                        )
+            if (token is ExactValueParameterToken) {
+                parameterCriteria.add(
+                    ParameterCriterion(
+                        token.name,
+                        ParameterCriterionType.Exact,
+                        token.value,
+                        token.optional
                     )
-                }
-
-                else -> {
-                    var optional = token.optional
+                )
+            } else {
+                val optional = token.optional.let {
                     val parameterTypeFromRoute =
                         if (numberPotentialRouteParameters1 < parameterTypesFromRoutes.size) parameterTypesFromRoutes[numberPotentialRouteParameters1] else null
                     if (parameterTypeFromRoute != null) {
                         if (token.optional && !parameterTypeFromRoute.optional) {
                             throw IllegalArgumentException("Route function $function has optional parameter route token ${token.name} mapped to non-optional function parameter type ${parameterTypeFromRoute.clazz.clazz.simpleName}.")
                         }
-                        optional = optional || parameterTypeFromRoute.optional
+                        it || parameterTypeFromRoute.optional
+                    } else {
+                        it
                     }
-
-                    when (token) {
-                        is WildcardParameterToken -> {
-                            parameterCriteria.add(
-                                ParameterCriterion(
-                                    token.name,
-                                    ParameterCriterionType.Regex,
-                                    "*",
-                                    optional,
-                                    WildCardRegex
-                                )
-                            )
-                        }
-
-                        is PatternParameterToken -> {
-                            try {
-                                val criterion = ParameterCriterion(
-                                    token.name,
-                                    ParameterCriterionType.Regex,
-                                    token.pattern,
-                                    optional,
-                                    token.pattern.toRegex()
-                                )
-                                parameterCriteria.add(criterion)
-                                numberPotentialRouteParameters1 += criterion.numberPatternGroups.coerceAtLeast(1)
-                            } catch (e: PatternSyntaxException) {
-                                throw IllegalArgumentException(
-                                    "Route function $function has invalid parameter regular expression pattern ${token.pattern}.",
-                                    e
-                                )
-                            }
-                        }
-
-                        is FunctionParameterParameterToken -> {
-                            val regex =
-                                parameterTypesFromRoutes.getOrNull(numberPotentialRouteParameters1)?.clazz?.routeRegex
-                                    ?: throw IllegalArgumentException("Route function $function has parameter pattern {} with no matching parameter.")
-                            parameterCriteria.add(
-                                ParameterCriterion(
-                                    token.name,
-                                    ParameterCriterionType.Regex,
-                                    regex.pattern,
-                                    optional,
-                                    regex
-                                )
-                            )
-                        }
-
-                        is SymbolParameterToken -> {
-                            val regex = configuration.symbolsToRegexs[token.symbol]
-                                ?: throw IllegalArgumentException("Route function $function references undefined symbol ${token.symbol} in parameter token.")
-                            parameterCriteria.add(
-                                ParameterCriterion(
-                                    token.name,
-                                    ParameterCriterionType.Regex,
-                                    regex.pattern,
-                                    optional,
-                                    regex
-                                )
-                            )
-                        }
-
-                        else -> throw IllegalArgumentException("Invalid parameter token type ${token.javaClass.kotlin.qualifiedName}.")
-                    }
-                    ++numberPotentialRouteParameters1
                 }
+                when (token) {
+                    is WildcardParameterToken -> {
+                        parameterCriteria.add(
+                            ParameterCriterion(
+                                token.name,
+                                ParameterCriterionType.Regex,
+                                "*",
+                                optional,
+                                WildCardRegex
+                            )
+                        )
+                    }
+
+                    is PatternParameterToken -> {
+                        try {
+                            val criterion = ParameterCriterion(
+                                token.name,
+                                ParameterCriterionType.Regex,
+                                token.pattern,
+                                optional,
+                                token.pattern.toRegex()
+                            )
+                            parameterCriteria.add(criterion)
+                            numberPotentialRouteParameters1 += criterion.numberPatternGroups.coerceAtLeast(1)
+                        } catch (e: PatternSyntaxException) {
+                            throw IllegalArgumentException(
+                                "Route function $function has invalid parameter regular expression pattern ${token.pattern}.",
+                                e
+                            )
+                        }
+                    }
+
+                    is FunctionParameterParameterToken -> {
+                        val regex =
+                            parameterTypesFromRoutes.getOrNull(numberPotentialRouteParameters1)?.clazz?.routeRegex
+                                ?: throw IllegalArgumentException("Route function $function has parameter pattern {} with no matching parameter.")
+                        parameterCriteria.add(
+                            ParameterCriterion(
+                                token.name,
+                                ParameterCriterionType.Regex,
+                                regex.pattern,
+                                optional,
+                                regex
+                            )
+                        )
+                    }
+
+                    is SymbolParameterToken -> {
+                        val regex = configuration.symbolsToRegexs[token.symbol]
+                            ?: throw IllegalArgumentException("Route function $function references undefined symbol ${token.symbol} in parameter token.")
+                        parameterCriteria.add(
+                            ParameterCriterion(
+                                token.name,
+                                ParameterCriterionType.Regex,
+                                regex.pattern,
+                                optional,
+                                regex
+                            )
+                        )
+                    }
+
+                    else -> throw IllegalArgumentException("Invalid parameter token type ${token.javaClass.kotlin.qualifiedName}.")
+                }
+                ++numberPotentialRouteParameters1
             }
         }
         return numberPotentialRouteParameters1

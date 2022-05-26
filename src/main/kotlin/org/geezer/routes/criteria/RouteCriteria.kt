@@ -20,7 +20,8 @@ internal data class RouteCriteria(
 
     fun matches(context: RequestContext): Boolean {
         if (!methods.contains(context.method) ||
-            !hasGobblePathCriterion && context.path.size != pathCriteria.size) return false
+            !hasGobblePathCriterion &&
+            context.path.size != pathCriteria.size) return false
 
         val segments = context.path.segments.withIndex()
         if (segments.any { (i,_) -> i > pathCriteria.size }) return false
@@ -33,12 +34,11 @@ internal data class RouteCriteria(
                 PathCriterionType.Gobble -> true
             } }
             ?.first
-        if (valueMismatch != null && valueMismatch.type != PathCriterionType.Gobble) return false
+        if (valueMismatch != null &&
+            valueMismatch.type != PathCriterionType.Gobble) return false
 
         if (acceptTypePatterns.isNotEmpty() &&
-            acceptTypePatterns.none { it.containsMatchIn(context.requestedContentType.type) }) {
-            return false
-        }
+            acceptTypePatterns.none { it.containsMatchIn(context.requestedContentType.type) }) return false
 
         val paramValues = parameterCriteria
             .map { it to context.parameters.getValues(it.name) }

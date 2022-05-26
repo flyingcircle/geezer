@@ -14,13 +14,14 @@ class RoutingFilter : Filter {
 
     override fun init(filterConfig: FilterConfig) {
         val onlyInitParam = filterConfig.getInitParameter("ONLY")
-        onlyInitParam?.split(",")?.toTypedArray()?.let { onlyInitParams ->
-            onlyRegexs = onlyInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
-        }
+        onlyRegexs = onlyInitParam?.split(",")?.toTypedArray()?.let { onlyInitParams ->
+            onlyInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
+        } ?: listOf()
+
         val exceptInitParam = filterConfig.getInitParameter("EXCEPT")
-        exceptInitParam?.split(",")?.toTypedArray()?.let { exceptInitParams ->
-            exceptRegexs = exceptInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
-        }
+        exceptRegexs = exceptInitParam?.split(",")?.toTypedArray()?.let { exceptInitParams ->
+            exceptInitParams.filter { it.isNotBlank() }.map { Regex(it.trim()) }
+        } ?: listOf()
     }
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {

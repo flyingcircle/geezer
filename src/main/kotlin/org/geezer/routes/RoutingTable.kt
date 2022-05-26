@@ -48,7 +48,7 @@ class RoutingTable(val configuration: RoutesConfiguration, handler: ((table: Rou
 
     fun add(route: String = "", function: KFunction<*>, method: HttpMethod? = null, methods: List<HttpMethod>? = null, forwardPath: String = "", acceptTypePatterns: List<String>? = null, contentType: String? = null, returnedStringContent: Boolean? = null, beforeRoute: KFunction<*>? = null, beforeRoutes: List<KFunction<*>>? = null, afterRoute: KFunction<*>? = null, afterRoutes: List<KFunction<*>>? = null, exceptionHandler: ((e: Exception, requestContext: RequestContext) -> Unit)? = null): RoutingTable {
         val context = RouteContext(configuration, localContext.get(), Path(route), method, methods, Path(forwardPath), acceptTypePatterns, contentType, returnedStringContent, beforeFunction = beforeRoute, beforeFunctions = beforeRoutes, afterFunction = afterRoute, afterFunctions = afterRoutes, exceptionHandler)
-        val forwardPath = configuration.rootForwardPath.let {Path(it).combine(context.forwardPath) }
+        val forwardPath = configuration.rootForwardPath.let { Path(it).combine(context.forwardPath) }
 
         val returnedStringContent = context.returnedStringContent ?: configuration.defaultReturnedStringIsContent
         val routeFunction = RouteFunction(function, configuration.routeInstancePool, returnedStringContent)

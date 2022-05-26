@@ -39,7 +39,7 @@ class RequestPath {
 
     constructor(segments: List<String>) {
         this.segments = segments
-        path = "/${segments.joinToString("/")}"
+        path = if (segments.isEmpty()) "" else "/${segments.joinToString("/")}"
     }
 
     @Throws(IndexOutOfBoundsException::class)
